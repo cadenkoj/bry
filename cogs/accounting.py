@@ -71,7 +71,8 @@ class Accounting(commands.Cog):
             The payment method used.
         info: str
             The payment info provided."""
-        name, price = item.split("-")
+        name, price_str = item.split("-")
+        price = int(price_str)
 
         customer_role = interaction.guild.get_role(1150962653536198779)
 
@@ -117,6 +118,8 @@ Payment Method → {payment.name}
         await log_channel.send(embed=log_embed)
         await interaction.followup.send(embed=chat_embed)
 
+    @apc.command()
+    @apc.guild_only()
     async def stock(self, interaction: discord.Interaction) -> None:
         stock_collection = self.bot.database.get_collection("stock")
         stock = stock_collection.find_one({})
