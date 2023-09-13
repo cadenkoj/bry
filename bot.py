@@ -35,11 +35,18 @@ class Bot(commands.Bot):
         commands = len(app_commands)
         print(f"Successfully synced {commands} commands.")
 
+        activity = discord.Activity(type=discord.ActivityType.watching, name="over Bry's Shop")
+        await self.change_presence(activity=activity)
+
     async def on_app_command_error(self, interaction: discord.Interaction, error: apc.AppCommandError) -> None:
         print(error)
 
         embed = discord.Embed(color=0xE24C4B, description=error)
-        await interaction.followup.send(embed=embed, ephemeral=True)
+
+        if interaction.response.is_done():
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
     async def setup_hook(self):
         from cogs.accounting import Accounting
