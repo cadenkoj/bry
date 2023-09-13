@@ -122,14 +122,11 @@ Payment Method → {payment.name}
             price = doc["price"]
             quantity = doc["quantity"]
 
-            display_item = f"**{item}** (${price})"
-
             if quantity < 1:
-                display_item = f"~~{display_item}~~ — **Out of Stock**"
-            else:
-                display_item = f"{display_item} — **{quantity}x**"
+                continue
 
-            stock_items.append(f"- {display_item}")
+            display_item = f"- **{item}** (${price}) — **{quantity}x**"
+            stock_items.append(display_item)
 
         display_stock = "\n".join(stock_items)
         stock_embed = discord.Embed(color=0x77ABFC, description=f"**__Stock__**\n{display_stock}")
