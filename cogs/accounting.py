@@ -12,6 +12,7 @@ class Accounting(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.update_channels.start()
+        self.update_stock_embed.start()
 
     payment = [
         apc.Choice(name="PayPal", value="paypal_email"),
@@ -47,10 +48,16 @@ class Accounting(commands.Cog):
             The payment method used.
         info: str
             The payment info provided."""
-        name, display_price = item.split("$")
 
-        if interaction.user.get_role(1146357576389378198) is None:
+        is_support = interaction.user.get_role(1146357576389378198)
+        if not is_support:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            return
+
+        try:
+            name, display_price = item.split("$")
+        except ValueError:
+            await interaction.response.send_message("You must provide a valid item.", ephemeral=True)
             return
 
         if display_price == "0":
@@ -109,7 +116,8 @@ Payment Method → {payment.name}
     @apc.guild_only()
     async def stock(self, interaction: discord.Interaction) -> None:
         """Displays the curent available stock."""
-        if interaction.user.get_role(1146357576389378198) is None:
+        is_support = interaction.user.get_role(1146357576389378198)
+        if not is_support:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             return
 
@@ -144,12 +152,17 @@ Payment Method → {payment.name}
             The item that was restocked.
         quantity: app_commands.Choice[str]
             The amount that was restocked"""
-        name, display_price = item.split("$")
 
         is_seller = interaction.user.get_role(1145959138602524672) is not None
         is_exclusive = interaction.user.get_role(1146357576389378198) is not None
         if not is_seller and not is_exclusive:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            return
+
+        try:
+            name, display_price = item.split("$")
+        except ValueError:
+            await interaction.response.send_message("You must provide a valid item.", ephemeral=True)
             return
 
         stock_collection = self.bot.database.get_collection("stock")
@@ -192,6 +205,7 @@ Payment Method → {payment.name}
             The price of the item.
         quantity: int
             The amount of the item in stock."""
+
         is_seller = interaction.user.get_role(1145959138602524672) is not None
         is_exclusive = interaction.user.get_role(1146357576389378198) is not None
         if not is_seller and not is_exclusive:
@@ -235,12 +249,17 @@ Payment Method → {payment.name}
             The new name of the item.
         price: Optional[int]
             The new price of the item."""
-        old_name, old_price = item.split("$")
 
         is_seller = interaction.user.get_role(1145959138602524672) is not None
         is_exclusive = interaction.user.get_role(1146357576389378198) is not None
         if not is_seller and not is_exclusive:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            return
+
+        try:
+            old_name, old_price = item.split("$")
+        except ValueError:
+            await interaction.response.send_message("You must provide a valid item.", ephemeral=True)
             return
 
         stock_collection = self.bot.database.get_collection("stock")
@@ -287,12 +306,17 @@ Price → ${price:,}
         ___________
         item: str
             The name of the item to remove."""
-        name, display_price = item.split("$")
 
         is_seller = interaction.user.get_role(1145959138602524672) is not None
         is_exclusive = interaction.user.get_role(1146357576389378198) is not None
         if not is_seller and not is_exclusive:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            return
+
+        try:
+            name, display_price = item.split("$")
+        except ValueError:
+            await interaction.response.send_message("You must provide a valid item.", ephemeral=True)
             return
 
         stock_collection = self.bot.database.get_collection("stock")
@@ -347,10 +371,55 @@ Price → ${price:,}
         logs = log_collection.find({})
 
         # Don't touch!
-        starting_sales = 100
+        starting_sales = 99
 
         combined_earnings = sum([log["item"]["price"] for log in logs])
         combined_sales = starting_sales + log_collection.count_documents({})
 
         await earned_channel.edit(name=f"Earned: ${combined_earnings:,}")
         await sales_channel.edit(name=f"Sales: {combined_sales:,}")
+
+    @tasks.loop(minutes=10)
+    async def update_stock_embed(self) -> None:
+        stock_channel = self.bot.get_channel(1151344325893046293)
+
+        stock_collection = self.bot.database.get_collection("stock")
+        stock = stock_collection.find({})
+
+        stock_items = []
+        for doc in stock:
+            item = doc["item"]
+            price = doc["price"]
+            quantity = doc["quantity"]
+
+            if quantity < 1:
+                continue
+
+            display_item = f"- **{item}** (${price}) — **{quantity}x**"
+            stock_items.append(display_item)
+
+        display_stock = "\n".join(stock_items)
+
+        stock_embed = discord.Embed(
+            color=0x77ABFC,
+            description=f"**__Stock__**\n{display_stock}",
+            timestamp=discord.utils.utcnow(),
+        )
+
+        stock_embed.set_footer(text="Last Updated")
+
+        stock_message = None
+        async for message in stock_channel.history():
+            if message.author == message.guild.me:
+                stock_message = message
+                break
+
+        if stock_message is None:
+            await stock_channel.send(embed=stock_embed)
+        else:
+            await stock_message.edit(embed=stock_embed)
+
+    @update_channels.before_loop
+    @update_stock_embed.before_loop
+    async def before_update(self) -> None:
+        await self.bot.wait_until_ready()
