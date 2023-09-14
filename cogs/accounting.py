@@ -51,17 +51,23 @@ class Accounting(commands.Cog):
 
         is_support = interaction.user.get_role(1146357576389378198)
         if not is_support:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            await interaction.response.send_message(
+                "You do not have permission to use this command.", ephemeral=True
+            )
             return
 
         try:
             name, display_price = item.split("$")
         except ValueError:
-            await interaction.response.send_message("You must provide a valid item.", ephemeral=True)
+            await interaction.response.send_message(
+                "You must provide a valid item.", ephemeral=True
+            )
             return
 
         if display_price == "0":
-            await interaction.response.send_message("This item is out of stock.", ephemeral=True)
+            await interaction.response.send_message(
+                "This item is out of stock.", ephemeral=True
+            )
             return
 
         await interaction.response.defer()
@@ -118,7 +124,9 @@ Payment Method → {payment.name}
         """Displays the curent available stock."""
         is_support = interaction.user.get_role(1146357576389378198)
         if not is_support:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            await interaction.response.send_message(
+                "You do not have permission to use this command.", ephemeral=True
+            )
             return
 
         stock_collection = self.bot.database.get_collection("stock")
@@ -137,13 +145,17 @@ Payment Method → {payment.name}
             stock_items.append(display_item)
 
         display_stock = "\n".join(stock_items)
-        stock_embed = discord.Embed(color=0x77ABFC, description=f"**__Stock__**\n{display_stock}")
+        stock_embed = discord.Embed(
+            color=0x77ABFC, description=f"**__Stock__**\n{display_stock}"
+        )
 
         await interaction.response.send_message(embed=stock_embed)
 
     @apc.command()
     @apc.guild_only()
-    async def restock(self, interaction: discord.Interaction, item: str, quantity: int) -> None:
+    async def restock(
+        self, interaction: discord.Interaction, item: str, quantity: int
+    ) -> None:
         """Updates the a stock amount.
 
         Parameters
@@ -156,13 +168,17 @@ Payment Method → {payment.name}
         is_seller = interaction.user.get_role(1145959138602524672) is not None
         is_exclusive = interaction.user.get_role(1146357576389378198) is not None
         if not is_seller and not is_exclusive:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            await interaction.response.send_message(
+                "You do not have permission to use this command.", ephemeral=True
+            )
             return
 
         try:
             name, display_price = item.split("$")
         except ValueError:
-            await interaction.response.send_message("You must provide a valid item.", ephemeral=True)
+            await interaction.response.send_message(
+                "You must provide a valid item.", ephemeral=True
+            )
             return
 
         stock_collection = self.bot.database.get_collection("stock")
@@ -173,7 +189,9 @@ Payment Method → {payment.name}
         doc = stock_collection.find_one(filter)
 
         if doc is None:
-            await interaction.response.send_message("This item does not exist.", ephemeral=True)
+            await interaction.response.send_message(
+                "This item does not exist.", ephemeral=True
+            )
             return
 
         stock_collection.update_one(filter, update, upsert=True)
@@ -187,14 +205,18 @@ Payment Method → {payment.name}
             timestamp=discord.utils.utcnow(),
         )
 
-        restock_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
+        restock_embed.set_author(
+            name=interaction.user, icon_url=interaction.user.display_avatar.url
+        )
         restock_embed.set_footer(text=f"${price:,}")
 
         await interaction.response.send_message(embed=restock_embed)
 
     @apc.command()
     @apc.guild_only()
-    async def additem(self, interaction: discord.Interaction, name: str, price: int, quantity: int) -> None:
+    async def additem(
+        self, interaction: discord.Interaction, name: str, price: int, quantity: int
+    ) -> None:
         """Adds an item to the stock list.
 
         Parameters
@@ -209,16 +231,22 @@ Payment Method → {payment.name}
         is_seller = interaction.user.get_role(1145959138602524672) is not None
         is_exclusive = interaction.user.get_role(1146357576389378198) is not None
         if not is_seller and not is_exclusive:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            await interaction.response.send_message(
+                "You do not have permission to use this command.", ephemeral=True
+            )
             return
 
         stock_collection = self.bot.database.get_collection("stock")
 
         if stock_collection.find_one({"item": name}):
-            await interaction.response.send_message("This item already exists.", ephemeral=True)
+            await interaction.response.send_message(
+                "This item already exists.", ephemeral=True
+            )
             return
 
-        stock_collection.insert_one({"item": name, "price": price, "quantity": quantity})
+        stock_collection.insert_one(
+            {"item": name, "price": price, "quantity": quantity}
+        )
 
         add_item_embed = discord.Embed(
             color=0x77ABFC,
@@ -226,7 +254,9 @@ Payment Method → {payment.name}
             timestamp=discord.utils.utcnow(),
         )
 
-        add_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
+        add_item_embed.set_author(
+            name=interaction.user, icon_url=interaction.user.display_avatar.url
+        )
 
         await interaction.response.send_message(embed=add_item_embed)
 
@@ -253,19 +283,25 @@ Payment Method → {payment.name}
         is_seller = interaction.user.get_role(1145959138602524672) is not None
         is_exclusive = interaction.user.get_role(1146357576389378198) is not None
         if not is_seller and not is_exclusive:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            await interaction.response.send_message(
+                "You do not have permission to use this command.", ephemeral=True
+            )
             return
 
         try:
             old_name, old_price = item.split("$")
         except ValueError:
-            await interaction.response.send_message("You must provide a valid item.", ephemeral=True)
+            await interaction.response.send_message(
+                "You must provide a valid item.", ephemeral=True
+            )
             return
 
         stock_collection = self.bot.database.get_collection("stock")
 
         if not stock_collection.find_one({"item": old_name}):
-            await interaction.response.send_message("This item does not exist.", ephemeral=True)
+            await interaction.response.send_message(
+                "This item does not exist.", ephemeral=True
+            )
             return
 
         filter = {"item": old_name}
@@ -278,7 +314,9 @@ Payment Method → {payment.name}
             update["price"] = price
 
         if not update:
-            await interaction.response.send_message("You must provide a new name or price.", ephemeral=True)
+            await interaction.response.send_message(
+                "You must provide a new name or price.", ephemeral=True
+            )
             return
 
         stock_collection.update_one(filter, {"$set": update})
@@ -293,7 +331,9 @@ Price → ${price:,}
             timestamp=discord.utils.utcnow(),
         )
 
-        update_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
+        update_item_embed.set_author(
+            name=interaction.user, icon_url=interaction.user.display_avatar.url
+        )
 
         await interaction.response.send_message(embed=update_item_embed)
 
@@ -310,19 +350,25 @@ Price → ${price:,}
         is_seller = interaction.user.get_role(1145959138602524672) is not None
         is_exclusive = interaction.user.get_role(1146357576389378198) is not None
         if not is_seller and not is_exclusive:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            await interaction.response.send_message(
+                "You do not have permission to use this command.", ephemeral=True
+            )
             return
 
         try:
             name, display_price = item.split("$")
         except ValueError:
-            await interaction.response.send_message("You must provide a valid item.", ephemeral=True)
+            await interaction.response.send_message(
+                "You must provide a valid item.", ephemeral=True
+            )
             return
 
         stock_collection = self.bot.database.get_collection("stock")
 
         if not stock_collection.find_one({"item": name}):
-            await interaction.response.send_message("This item does not exist.", ephemeral=True)
+            await interaction.response.send_message(
+                "This item does not exist.", ephemeral=True
+            )
             return
 
         stock_collection.delete_one({"item": name})
@@ -333,7 +379,9 @@ Price → ${price:,}
             timestamp=discord.utils.utcnow(),
         )
 
-        remove_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
+        remove_item_embed.set_author(
+            name=interaction.user, icon_url=interaction.user.display_avatar.url
+        )
         remove_item_embed.set_footer(text=f"${display_price}")
 
         await interaction.response.send_message(embed=remove_item_embed)
@@ -342,7 +390,9 @@ Price → ${price:,}
     @restock.autocomplete("item")
     @updateitem.autocomplete("item")
     @delitem.autocomplete("item")
-    async def stock_autocompletion(self, interaction: discord.Interaction, current: str) -> List[apc.Choice[str]]:
+    async def stock_autocompletion(
+        self, interaction: discord.Interaction, current: str
+    ) -> List[apc.Choice[str]]:
         data = []
 
         stock_collection = self.bot.database.get_collection("stock")
@@ -356,9 +406,18 @@ Price → ${price:,}
             if current.lower() in item.lower():
                 display_item = f"{item} (${price})"
                 if quantity < 1:
-                    data.append(apc.Choice(name=f"{display_item} — Out of Stock", value=f"{item}$0"))
+                    data.append(
+                        apc.Choice(
+                            name=f"{display_item} — Out of Stock", value=f"{item}$0"
+                        )
+                    )
                 else:
-                    data.append(apc.Choice(name=f"{display_item} — {quantity}x", value=f"{item}${price:,}"))
+                    data.append(
+                        apc.Choice(
+                            name=f"{display_item} — {quantity}x",
+                            value=f"{item}${price:,}",
+                        )
+                    )
 
         return data
 
