@@ -49,7 +49,7 @@ class Accounting(commands.Cog):
         info: str
             The payment info provided."""
 
-        is_support = interaction.user.get_role(1146357576389378198)
+        is_support = interaction.user.get_role(1145965467207467049)
         if not is_support:
             await interaction.response.send_message(
                 "You do not have permission to use this command.", ephemeral=True
@@ -122,7 +122,7 @@ Payment Method → {payment.name}
     @apc.guild_only()
     async def stock(self, interaction: discord.Interaction) -> None:
         """Displays the curent available stock."""
-        is_support = interaction.user.get_role(1146357576389378198)
+        is_support = interaction.user.get_role(1145965467207467049)
         if not is_support:
             await interaction.response.send_message(
                 "You do not have permission to use this command.", ephemeral=True
