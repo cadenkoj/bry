@@ -13,6 +13,8 @@ class Bot(commands.Bot):
         self.database = self._get_database(name="bry")
 
         self.event(self.on_ready)
+        self.event(self.on_app_command_completion)
+
         self.tree.error(self.on_app_command_error)
 
     def _get_database(self, name: str):
@@ -37,6 +39,16 @@ class Bot(commands.Bot):
 
         activity = discord.Activity(type=discord.ActivityType.watching, name="over Bry's Shop")
         await self.change_presence(activity=activity)
+
+    async def on_app_command_completion(self, interaction: discord.Interaction, command: apc.Command) -> None:
+        print(
+            f"""
+--- Command Completed ---
+Command: /{command.name}
+User: @{interaction.user} ({interaction.user.id})
+Channel: #{interaction.channel} ({interaction.channel.id})
+"""
+        )
 
     async def on_app_command_error(self, interaction: discord.Interaction, error: apc.AppCommandError) -> None:
         print(error)
