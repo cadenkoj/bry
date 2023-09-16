@@ -76,7 +76,8 @@ class Accounting(commands.Cog):
         update = {"$inc": {"quantity": -1}}
 
         doc = stock_collection.find_one(filter)
-        stock_collection.update_one(filter, update, upsert=True)
+        stock_collection.update_one(filter, update)
+
         raw_price = doc["price"]
 
         body = {
@@ -177,7 +178,7 @@ Payment Method → {payment.name}
             await interaction.response.send_message("This item does not exist.", ephemeral=True)
             return
 
-        stock_collection.update_one(filter, update, upsert=True)
+        stock_collection.update_one(filter, update)
 
         price = doc["price"]
         combined_quantity = doc["quantity"] + quantity
