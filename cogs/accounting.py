@@ -354,7 +354,7 @@ Payment Method → {payment.name}
                 else:
                     data.append(apc.Choice(name=f"{display_item} — {quantity}x", value=f"{item}${price:,}"))
 
-        return data
+        return data[:25]
 
     @tasks.loop(minutes=10)
     async def update_channels(self) -> None:
