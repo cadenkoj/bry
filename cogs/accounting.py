@@ -17,6 +17,8 @@ class Accounting(commands.Cog):
     payment = [
         apc.Choice(name="PayPal", value="paypal_email"),
         apc.Choice(name="Cash App", value="cashapp_tag"),
+        apc.Choice(name="Venmo", value="venmo_username"),
+        apc.Choice(name="Stripe", value="stripe_email"),
         apc.Choice(name="BTC", value="btc_address"),
         apc.Choice(name="LTC", value="ltc_address"),
         apc.Choice(name="ETH", value="eth_address"),
