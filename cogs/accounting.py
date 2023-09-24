@@ -101,7 +101,8 @@ class Accounting(commands.Cog):
         )
 
         log_embed.set_author(
-            name=customer, icon_url=f"{customer.display_avatar.url} ({customer.id})"
+            name=f"{customer} ({customer.id})",
+            icon_url=f"{customer.display_avatar.url}",
         )
         log_embed.add_field(name=f"__Username__", value=username, inline=True)
         log_embed.add_field(name=f"__{payment.name}__", value=info, inline=True)
