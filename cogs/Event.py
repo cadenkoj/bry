@@ -1,5 +1,5 @@
 import discord
-from discord.ext import app_commands as apc
+from discord import app_commands as apc
 from discord.ext import commands
 
 from bot import Bot
