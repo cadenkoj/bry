@@ -1,0 +1,399 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f68b6588880>, 1772240.020460952)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f68b6581180>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7fa884b7c880>, 1772241.30593953)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7fa884b71330>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f7737c908e0>, 1772242.606385886)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f7737c85420>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f88157c0880>, 1772243.959203975)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f88157b5330>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f98cd2448e0>, 1772245.192584523)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f98cd23d4e0>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f15f3bbc8e0>, 1772246.459937776)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f15f3bb52a0>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7fe0dfbb8880>, 1772247.726270485)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7fe0dfbb1150>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7fcadcf88880>, 1772249.021049314)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7fcadcf7cd60>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7fcecb4388e0>, 1772250.360027047)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7fcecb42d1e0>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7fb04ce30880>, 1772251.549183494)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7fb04ce24f10>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f39904b88e0>, 1772257.165430809)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f39904ad390>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7ff9114b0880>, 1772258.54512784)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7ff9114a4fa0>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f812d08c8e0>, 1772259.893933807)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f812d081780>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f1daa6b4880>, 1772265.243555631)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f1daa6acbe0>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7fe7aec30880>, 1772266.676189361)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7fe7aec29030>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7ff62e8ac8e0>, 1772268.265626583)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7ff62e8a16c0>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f1b292b88e0>, 1772269.688622901)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f1b292ad2d0>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7faa1bf848e0>, 1772271.129927908)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7faa1bf7d300>
+Traceback (most recent call last):
+  File "/home/ubuntu/bry/main.py", line 17, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/ubuntu/bry/main.py", line 13, in main
+    await bot.start(os.getenv("DISCORD_TOKEN"))
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 779, in start
+    await self.login(token)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/discord/client.py", line 623, in login
+    await self.setup_hook()
+  File "/home/ubuntu/bry/bot.py", line 25, in setup_hook
+    from cogs.Event import Event
+  File "/home/ubuntu/bry/cogs/Event.py", line 2, in <module>
+    from discord.ext import app_commands as apc
+ImportError: cannot import name 'app_commands' from 'discord.ext' (unknown location)
+Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x7f4635aac880>, 1772272.545007026)]']
+connector: <aiohttp.connector.TCPConnector object at 0x7f4635aa8bb0>
