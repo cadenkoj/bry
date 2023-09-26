@@ -12,11 +12,6 @@ class Bot(commands.Bot):
         super().__init__(",", help_command=None, intents=intents)
         self.database = self._get_database(name="bry")
 
-        self.event(self.on_ready)
-        self.event(self.on_app_command_completion)
-
-        self.tree.error(self.on_app_command_error)
-
     def _get_database(self, name: str):
         mongo_uri = os.getenv("MONGO_URI")
 
@@ -27,6 +22,8 @@ class Bot(commands.Bot):
         return client.get_database(name)
 
     async def setup_hook(self):
+        from cogs.Event import Event
         from cogs.Accounting import Accounting
 
+        await self.add_cog(Event(self))
         await self.add_cog(Accounting(self))
