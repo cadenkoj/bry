@@ -230,7 +230,7 @@ Payment Method → {payment.name}
         quantity: int
             The amount of the item in stock."""
 
-        is_owner = interaction.user.id == 525189552986521613 or interaction.user.id == 1092543812527738911
+        is_owner = interaction.user.id == 525189552986521613 or interaction.user.id == 1092543812527738911 or interaction.user.id == 997958244452544582
         if not is_owner:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             return
@@ -273,7 +273,7 @@ Payment Method → {payment.name}
         price: Optional[int]
             The new price of the item."""
 
-        is_owner = interaction.user.id == 525189552986521613 or interaction.user.id == 1092543812527738911
+        is_owner = interaction.user.id == 525189552986521613 or interaction.user.id == 1092543812527738911 or interaction.user.id == 997958244452544582
         if not is_owner:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             return
@@ -324,7 +324,7 @@ Payment Method → {payment.name}
         item: str
             The name of the item to remove."""
 
-        is_owner = interaction.user.id == 525189552986521613 or interaction.user.id == 1092543812527738911
+        is_owner = interaction.user.id == 525189552986521613 or interaction.user.id == 1092543812527738911 or interaction.user.id == 997958244452544582
         if not is_owner:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             return
