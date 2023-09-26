@@ -11,6 +11,7 @@ class Event(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
+    @commands.Cog.listener()
     async def on_ready(self):
         print(f"Logged in as {self.user} ({self.user.id})")
 
@@ -25,6 +26,7 @@ class Event(commands.Cog):
         activity = discord.Activity(type=discord.ActivityType.watching, name="over Bry's Shop")
         await self.change_presence(activity=activity)
 
+    @commands.Cog.listener()
     async def on_app_command_completion(self, interaction: discord.Interaction, command: apc.Command) -> None:
         print(
             f"""
@@ -36,6 +38,7 @@ Channel: #{interaction.channel} ({interaction.channel.id})
 """
         )
 
+    @commands.Cog.listener()
     async def on_app_command_error(self, interaction: discord.Interaction, error: apc.AppCommandError) -> None:
         print(error)
 
