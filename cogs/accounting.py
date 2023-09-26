@@ -395,7 +395,7 @@ Payment Method → {payment.name}
         starting_sales = 99
 
         combined_earnings = sum([log["item"]["price"] for log in logs])
-        combined_sales = starting_sales + log_collection.count_documents()
+        combined_sales = starting_sales + log_collection.count_documents({})
 
         await earned_channel.edit(name=f"Earned: ${combined_earnings:,}")
         await sales_channel.edit(name=f"Sales: {combined_sales:,}")
