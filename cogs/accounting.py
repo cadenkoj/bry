@@ -146,7 +146,7 @@ Payment Method → {payment.name}
             return
 
         stock_collection = self.bot.database.get_collection("stock")
-        stock = stock_collection.find({})
+        stock = stock_collection.find().sort("item")
 
         stock_items = []
         for doc in stock:
@@ -362,7 +362,7 @@ Payment Method → {payment.name}
         data = []
 
         stock_collection = self.bot.database.get_collection("stock")
-        stock = stock_collection.find({})
+        stock = stock_collection.find().sort("item")
 
         for doc in stock:
             item = doc["item"]
@@ -389,13 +389,13 @@ Payment Method → {payment.name}
         sales_channel = self.bot.get_channel(1146378711088775219)
 
         log_collection = self.bot.database.get_collection("logs")
-        logs = log_collection.find({})
+        logs = log_collection.find()
 
         # Don't touch!
         starting_sales = 99
 
         combined_earnings = sum([log["item"]["price"] for log in logs])
-        combined_sales = starting_sales + log_collection.count_documents({})
+        combined_sales = starting_sales + log_collection.count_documents()
 
         await earned_channel.edit(name=f"Earned: ${combined_earnings:,}")
         await sales_channel.edit(name=f"Sales: {combined_sales:,}")
@@ -405,7 +405,7 @@ Payment Method → {payment.name}
         stock_channel = self.bot.get_channel(1151344325893046293)
 
         stock_collection = self.bot.database.get_collection("stock")
-        stock = stock_collection.find({})
+        stock = stock_collection.find().sort("item")
 
         stock_items = []
         for doc in stock:
