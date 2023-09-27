@@ -35,12 +35,14 @@ class Event(commands.Cog):
     @commands.Cog.listener()
     async def on_app_command_completion(self, interaction: discord.Interaction, command: apc.Command) -> None:
         _log.info(
-            f"""
---- Command Completed ---
-Command: /{command.name}
-User: @{interaction.user} ({interaction.user.id})
-Channel: #{interaction.channel} ({interaction.channel.id})
--------------------------"""
+            """Command %s completed.
+User: %s (ID: %d)
+Channel: %s (ID: %d)""",
+            command.name,
+            interaction.user,
+            interaction.user.id,
+            interaction.channel,
+            interaction.channel.id,
         )
 
     async def on_app_command_error(self, interaction: discord.Interaction, error: apc.AppCommandError) -> None:

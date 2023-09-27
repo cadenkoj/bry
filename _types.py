@@ -22,8 +22,6 @@ class Log(TypedDict):
     eth_address: NotRequired[str]
 
 
-class Stock(TypedDict):
+class Stock(Item):
     _id: NotRequired[ObjectId]
-    item: str
     quantity: int
-    price: int
