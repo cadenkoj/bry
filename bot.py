@@ -1,29 +1,34 @@
+import logging
 import os
+from typing import Any
 
 import discord
-from discord import app_commands as apc
 from discord.ext import commands
 from pymongo import MongoClient
+from pymongo.database import Database
+
+from utils import LogFormatter
+
+_log = logging.getLogger(__name__)
 
 
 class Bot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
-        super().__init__(",", help_command=None, intents=intents)
+        super().__init__("b,", help_command=None, intents=intents)
         self.database = self._get_database(name="bry")
+        self.log_formatter = LogFormatter()
 
-    def _get_database(self, name: str):
-        mongo_uri = os.getenv("MONGO_URI")
+    # internals
 
-        if mongo_uri is None:
-            raise ValueError("MongoDB URI is not defined.")
+    def _get_database(self, **options: Any) -> Database:
+        return MongoClient(os.environ.get("ATLAS_URI")).get_database(**options)
 
-        client = MongoClient(mongo_uri)
-        return client.get_database(name)
-
-    async def setup_hook(self):
-        from cogs.Event import Event
-        from cogs.Accounting import Accounting
-
-        await self.add_cog(Event(self))
-        await self.add_cog(Accounting(self))
+    async def setup_hook(self) -> None:
+        for filename in os.listdir("cogs"):
+            if filename.endswith(".py"):
+                cog = filename[:-3]
+                try:
+                    await self.load_extension(f"cogs.{cog}")
+                except Exception as e:
+                    _log.warning(f"Cog '{cog}' raised an exception: {e.__class__.__name__}: {e}")
