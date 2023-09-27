@@ -4,14 +4,10 @@ import os
 from dotenv import load_dotenv
 
 from bot import Bot
+from utils import setup_logging
 
 load_dotenv()
+setup_logging()
 
-
-async def main() -> None:
-    bot = Bot()
-    await bot.start(os.getenv("DISCORD_TOKEN"))
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+bot = Bot()
+bot.run(os.environ.get("TOKEN"), reconnect=True, log_handler=None)
