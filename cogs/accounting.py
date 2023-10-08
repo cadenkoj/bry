@@ -274,7 +274,12 @@ Payment Method → {method.name}
     @apc.command()
     @apc.guild_only()
     async def fillstock(self, interaction: discord.Interaction, amount: int) -> None:
-        """Fills the stock list."""
+        """Fills the stock list.
+
+        Parameters
+        ___________
+        amount: int
+            The amount to fill the stock with."""
 
         if interaction.user.id not in OWNER_IDS:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
