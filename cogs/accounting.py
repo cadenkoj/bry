@@ -123,7 +123,7 @@ class Accounting(commands.Cog):
         log_count = log_collection.count_documents({"user_id": customer.id})
         total_spent = sum([log["item"]["price"] for log in user_logs])
 
-        if total_price >= 100:
+        if total_spent >= 100:
             valued_role = interaction.guild.get_role(1156319778810646579)
             await customer.add_roles(valued_role)
 
