@@ -271,6 +271,23 @@ Payment Method → {method.name}
 
         await interaction.response.send_message("Cleared the stock.", ephemeral=True)
 
+    @apc.command()
+    @apc.guild_only()
+    async def fillstock(self, interaction: discord.Interaction, amount: int) -> None:
+        """Fills the stock list."""
+
+        if interaction.user.id not in OWNER_IDS:
+            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+            return
+
+        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        stock = stock_collection.find()
+
+        for stock_item in stock:
+            stock_collection.update_one(stock_item, {"$set": {"quantity": amount}})
+
+        await interaction.response.send_message(f"Filled the stock with **{amount}x** per item.", ephemeral=True)
+
     @item.command()
     @apc.guild_only()
     async def add(self, interaction: discord.Interaction, name: str, price: int, quantity: int) -> None:
