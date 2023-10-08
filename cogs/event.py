@@ -24,7 +24,7 @@ class Event(commands.Cog):
         after_commands = await self.bot.tree.sync()
 
         _log.info(
-            "Successfully synced %d/%d commands.",
+            "Successfully synced %d of %d commands.",
             len(after_commands),
             len(before_commands),
         )
