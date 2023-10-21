@@ -95,7 +95,11 @@ class Accounting(commands.Cog):
         out_of_stock: list[str] = []
 
         for item in item_ids:
-            stock_item = stock_collection.find_one({"_id": ObjectId(item)})
+            try:
+                stock_item = stock_collection.find_one({"_id": ObjectId(item)})
+            except Exception:
+                invalid_items.append(item)
+                continue
 
             if stock_item is None:
                 invalid_items.append(item)
@@ -167,11 +171,13 @@ Payment Method → {method.name}
             description="**__Failed__**",
         )
 
-        if invalid_items:
-            error_embed.description += f"\nInvalid Items → {len(invalid_items)}"
-
         if out_of_stock:
             error_embed.description += f"\nOut of Stock → {', '.join(out_of_stock)}"
+            error_embed.set_footer(text=f"Tip: Use /fillstock to restock every item")
+
+        if invalid_items:
+            error_embed.description += f"\nInvalid Items → {len(invalid_items)}"
+            error_embed.set_footer(text=f"Make sure to select the item from the list")
 
         embeds = [chat_embed]
         if invalid_items or out_of_stock:
