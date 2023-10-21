@@ -185,8 +185,8 @@ Payment Method → {method.name}
             embeds.append(chat_embed)
             await customer.add_roles(customer_role)
             await log_channel.send(embed=log_embed)
-            await interaction.followup.send(embeds=embeds)
 
+        await interaction.followup.send(embeds=embeds)
 
     @apc.command()
     @apc.guild_only()
