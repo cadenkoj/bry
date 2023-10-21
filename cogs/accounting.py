@@ -174,18 +174,19 @@ Payment Method → {method.name}
         if out_of_stock:
             error_embed.description += f"\nOut of Stock → {', '.join(out_of_stock)}"
             error_embed.set_footer(text=f"Tip: Use /fillstock to restock every item")
-
         if invalid_items:
             error_embed.description += f"\nInvalid Items → {len(invalid_items)}"
             error_embed.set_footer(text=f"Make sure to select the item from the list")
 
-        embeds = [chat_embed]
+        embeds = []
         if invalid_items or out_of_stock:
-            embeds.insert(0, error_embed)
+            embeds.append(error_embed)
+        if item_names:
+            embeds.append(chat_embed)
+            await customer.add_roles(customer_role)
+            await log_channel.send(embed=log_embed)
+            await interaction.followup.send(embeds=embeds)
 
-        await customer.add_roles(customer_role)
-        await log_channel.send(embed=log_embed)
-        await interaction.followup.send(embeds=embeds)
 
     @apc.command()
     @apc.guild_only()
