@@ -1,9 +1,11 @@
+import re
 from typing import Optional
 
 import discord
 from bson import ObjectId
 from discord import app_commands as apc
 from discord.ext import commands, tasks
+import pymongo
 from pymongo.collection import Collection
 
 from _types import Log, Stock
@@ -200,20 +202,30 @@ Payment Method → {method.name}
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
 
-        stock_items = []
-        for stock_item in stock_collection.find().sort("name"):
+        stock_embed = discord.Embed(color=0x77ABFC, title="Stock")
+        for stock_item in stock_collection.find({"name": {"$regex": "Set$"}}).sort("name"):
+            name = stock_item["name"]
+            price = stock_item["price"]
+
+            stock_embed.add_field(name=f"{name} (${price})", value="")
+        stock_embed.add_field(name="Miscellaneous", value="")
+
+        for stock_item in stock_collection.find({"name": {"$not": {"$regex": "Set$"}}}).sort("price", pymongo.DESCENDING):
             name = stock_item["name"]
             price = stock_item["price"]
             quantity = stock_item["quantity"]
 
+            set_name, _ = name.rsplit(" ", 1)
+            i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
+
+            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
+            stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
+
             if quantity < 1:
                 continue
 
-            display_item = f"- **{name}** (${price:,}) — **{quantity}x**"
-            stock_items.append(display_item)
-
-        display_stock = "\n".join(stock_items)
-        stock_embed = discord.Embed(color=0x77ABFC, description=f"**__Stock__**\n{display_stock}")
+        if not stock_embed.fields[-1].value:
+            stock_embed.remove_field(-1)
 
         await interaction.response.send_message(embed=stock_embed)
 
@@ -384,8 +396,22 @@ Payment Method → {method.name}
             description += f"\nName → {name}"
 
         if price is not None:
+            old_price = updated_item["price"]
+
             updated_item["price"] = price
             description += f"\nPrice → ${price:,}"
+
+            if old_price != price:
+                channel = self.bot.get_channel(1166520967745511454)
+
+                price_diff = "📈" if price > old_price else "📉"
+                price_embed = discord.Embed(
+                    color=0x77ABFC,
+                    title=f"{price_diff} Price Updated",
+                    description=f"**{updated_item['name']}** has been updated from **${old_price:,}** to **${price:,}**.",
+                )
+
+                await channel.send(embed=price_embed)
 
         if quantity is not None:
             updated_item["quantity"] = quantity
@@ -468,26 +494,6 @@ Payment Method → {method.name}
 
         return data[:25]
 
-    # async def log_autocompletion(self, interaction: discord.Interaction, current: str) -> list[apc.Choice[str]]:
-    #     log_collection: Collection[Log] = self.bot.database.get_collection("logs")
-
-    #     data = []
-
-    #     for log in log_collection.find().sort("username"):
-    #         objectId = log["_id"]
-
-    #         if "username" not in log:
-    #             continue
-
-    #         username = log["username"]
-    #         item = log["item"]["name"]
-
-    #         display_item = f"{username} — {item}"
-    #         if current.lower() in display_item.lower():
-    #             data.append(apc.Choice(name=display_item, value=str(objectId)))
-
-    #     return data[:25]
-
     @tasks.loop(minutes=10)
     async def update_channels(self) -> None:
         earned_channel = self.bot.get_channel(1146378858451435540)
@@ -511,25 +517,32 @@ Payment Method → {method.name}
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
 
-        stock_items = []
-        for stock_item in stock_collection.find().sort("name"):
+        stock_embed = discord.Embed(color=0x77ABFC, title="Stock", timestamp=discord.utils.utcnow())
+        stock_embed.set_footer(text="Last Updated")
+        
+        for stock_item in stock_collection.find({"name": {"$regex": "Set$"}}).sort("name"):
+            name = stock_item["name"]
+            price = stock_item["price"]
+
+            stock_embed.add_field(name=f"{name} (${price})", value="")
+        stock_embed.add_field(name="Miscellaneous", value="")
+
+        for stock_item in stock_collection.find({"name": {"$not": {"$regex": "Set$"}}}).sort("price", pymongo.DESCENDING):
             name = stock_item["name"]
             price = stock_item["price"]
             quantity = stock_item["quantity"]
 
+            set_name, _ = name.rsplit(" ", 1)
+            i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
+
+            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
+            stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
+
             if quantity < 1:
                 continue
 
-            display_item = f"- **{name}** (${price:,}) — **{quantity}x**"
-            stock_items.append(display_item)
-
-        display_stock = "\n".join(stock_items)
-
-        stock_embed = discord.Embed(
-            color=0x77ABFC,
-            description=f"**__Stock__**\n{display_stock}",
-            timestamp=discord.utils.utcnow(),
-        )
+        if not stock_embed.fields[-1].value:
+            stock_embed.remove_field(-1)
 
         stock_embed.set_footer(text="Last Updated")
 
