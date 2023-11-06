@@ -219,23 +219,26 @@ class CreationModal(discord.ui.Modal):
     async def on_submit(self, interaction: discord.Interaction[Bot]):
         await interaction.response.defer(ephemeral=True)
 
+        category_name = f"{self.category} Tickets"
         category = next(
-            (category for category in interaction.guild.categories if category.name == self.category), None)
+            (category for category in interaction.guild.categories if category.name == category_name), None)
 
         overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(
             view_channel=False)}
         if not category:
-            category = await interaction.guild.create_category(self.category)
+            category = await interaction.guild.create_category(category_name)
             await category.create_text_channel('📃・transcripts', overwrites=overwrites)
 
         user_overwrites = {
             **overwrites, interaction.user: discord.PermissionOverwrite(view_channel=True)}
-        channel = await category.create_text_channel(f'ticket-{interaction.user.name[:5]}-1', overwrites=user_overwrites)
-
+            
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+
+        ticket_id = str(ticket_collection.count_documents({}))
+        channel = await category.create_text_channel(f'ticket-{interaction.user.name[:5]}-{ticket_id.rjust(4, "0")}', overwrites=user_overwrites)
+
         body = {"user_id": interaction.user.id, "channel_id": channel.id}
         update = {"$set": body}
-
         ticket_collection.update_one(body, update, upsert=True)
 
         embed = discord.Embed(
@@ -249,7 +252,7 @@ Support will be with you shortly.
         )
 
         embed.set_author(
-            name=f"Ticket #1 ({self.category})",
+            name=f"Ticket #{ticket_id} ({self.category})",
             icon_url=TICKET_EMOJI
         )
 
