@@ -63,7 +63,7 @@ class DynamicDelete(
             await category.create_text_channel('📃・transcripts', overwrites=overwrites)
 
         params = {"channel_id": interaction.channel_id, "category": self.category}
-        requests.get(f"https://api.railway.internal:8080/save", params)
+        requests.get(f"http://api.railway.internal:8080/save", params)
 
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
         
