@@ -10,7 +10,7 @@ class Item(TypedDict):
 
 class Log(TypedDict):
     _id: NotRequired[ObjectId]
-    user_id: str
+    user_id: int
     username: str
     item: Item
     paypal_email: NotRequired[str]
@@ -25,3 +25,9 @@ class Log(TypedDict):
 class Stock(Item):
     _id: NotRequired[ObjectId]
     quantity: int
+
+
+class Ticket(TypedDict):
+    _id: NotRequired[ObjectId]
+    user_id: int
+    channel_id: int

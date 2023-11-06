@@ -50,6 +50,7 @@ class Accounting(commands.Cog):
         item3: Optional[str],
         item4: Optional[str],
         item5: Optional[str],
+        discount: Optional[int] = 0,
     ) -> None:
         """Logs a sale and updates channel info.
 
@@ -62,9 +63,11 @@ class Accounting(commands.Cog):
         method: app_commands.Choice[str]
             The payment method used.
         info: str
-            The payment info provided.
+            The customer's payment info.
         item1: str
             Item 1
+        discount: Optional[int]
+            The discount applied to the purchase, NOT PER ITEM.
         item2: Optional[str]
             Item 2
         item3: Optional[str]
@@ -82,7 +85,7 @@ class Accounting(commands.Cog):
         await interaction.response.defer()
 
         customer_role = interaction.guild.get_role(1145959140594810933)
-        log_channel = self.bot.get_channel(1151322058941267968)
+        log_channel = self.bot.get_channel(1144089573111124099)
 
         log_collection: Collection[Log] = self.bot.database.get_collection("logs")
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
@@ -90,7 +93,7 @@ class Accounting(commands.Cog):
         combined_items = [item1, item2, item3, item4, item5]
         item_ids: list[str] = [item for item in combined_items if item is not None]
 
-        total_price = 0
+        total_price = 0 - discount
         item_names: list[str] = []
 
         invalid_items: list[str] = []
@@ -145,9 +148,12 @@ class Accounting(commands.Cog):
             notable_role = interaction.guild.get_role(1145959137453285416)
             await customer.add_roles(notable_role)
 
+        percent = round(discount / total_price + discount, 2)
+        discount_str = f'(-{percent}%)' if discount else ""
+
         log_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **${total_price:,}**.",
+            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **${total_price:,}** {discount_str}.",
         )
 
         log_embed.set_author(name=f"{customer}", icon_url=f"{customer.display_avatar.url}")
@@ -160,7 +166,7 @@ class Accounting(commands.Cog):
             color=0x77ABFC,
             description=f"""**__Info__**
 Items → {", ".join(item_names)}
-Total Price → ${total_price:,}
+Total Price → ${total_price:,} {discount_str}
 Username → {username}
 Payment Method → {method.name}
             """,
