@@ -85,7 +85,7 @@ class Accounting(commands.Cog):
         await interaction.response.defer()
 
         customer_role = interaction.guild.get_role(1145959140594810933)
-        log_channel = self.bot.get_channel(1144089573111124099)
+        log_channel = self.bot.get_channel(1151322058941267968)
 
         log_collection: Collection[Log] = self.bot.database.get_collection("logs")
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
