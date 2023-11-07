@@ -214,24 +214,22 @@ class CreationModal(discord.ui.Modal):
         category_name = f"{self.category} Tickets"
         category = next((category for category in interaction.guild.categories if category.name == category_name), None)
 
-        overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False)}
-        if not category:
-            category = await interaction.guild.create_category(category_name)
-            await category.create_text_channel('📃・transcripts', overwrites=overwrites)
-
-        user_overwrites = {
-            **overwrites,
-            interaction.user: discord.PermissionOverwrite(view_channel=True),
-        }
-
-        for role in support_roles:
-            user_overwrites[role] = discord.PermissionOverwrite(view_channel=True)
-            
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
 
         ticket_id = str(ticket_collection.count_documents({}))
         channel = await category.create_text_channel(f'ticket-{interaction.user.name[:5]}-{ticket_id.rjust(4, "0")}', overwrites=user_overwrites)
 
+        overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False)}
+        if not category:
+            category = await interaction.guild.create_category(category_name)
+            await category.create_text_channel('📃・transcripts', overwrites=overwrites)
+
+        user_overwrites = {**overwrites, interaction.user: discord.PermissionOverwrite(view_channel=True)}
+
+        for role in support_roles:
+            overwrite = {role: discord.PermissionOverwrite(view_channel=True)}
+            channel.edit(overwrites=overwrite)
+            
         body = {"user_id": interaction.user.id, "channel_id": channel.id}
         update = {"$set": body}
         ticket_collection.update_one(body, update, upsert=True)
