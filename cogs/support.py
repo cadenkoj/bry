@@ -214,22 +214,22 @@ class CreationModal(discord.ui.Modal):
         category_name = f"{self.category} Tickets"
         category = next((category for category in interaction.guild.categories if category.name == category_name), None)
 
-        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
-
-        ticket_id = str(ticket_collection.count_documents({}))
-
         overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False)}
-        user_overwrites = {**overwrites, interaction.user: discord.PermissionOverwrite(view_channel=True)}
-        channel = await category.create_text_channel(f'ticket-{interaction.user.name[:5]}-{ticket_id.rjust(4, "0")}', overwrites=user_overwrites)
-
         if not category:
             category = await interaction.guild.create_category(category_name)
             await category.create_text_channel('📃・transcripts', overwrites=overwrites)
 
-        for role in support_roles:
-            overwrite = {role: discord.PermissionOverwrite(view_channel=True)}
-            await channel.edit(overwrites=overwrite)
+        user_overwrites = {
+            **overwrites,
+            interaction.user: discord.PermissionOverwrite(view_channel=True),
+            support_roles: discord.PermissionOverwrite(view_channel=True)
+        }
             
+        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+
+        ticket_id = str(ticket_collection.count_documents({}))
+        channel = await category.create_text_channel(f'ticket-{interaction.user.name[:5]}-{ticket_id.rjust(4, "0")}', overwrites=user_overwrites)
+
         body = {"user_id": interaction.user.id, "channel_id": channel.id}
         update = {"$set": body}
         ticket_collection.update_one(body, update, upsert=True)
@@ -259,18 +259,18 @@ Support will be with you shortly.
         )
 
         view = ManageView(channel.id, self.category)
-        mentions = " ".join([r.mention for r in support_roles])
+        mentions = " ".join(r.mention for r in support_roles)
 
         message = await channel.send(f"{interaction.user.mention} {mentions}", embed=embed, view=view)
 
         await message.pin()
 
     async def get_support_roles(self, interaction: discord.Interaction) -> tuple[discord.Role]:
-        support_roles = []
+        roles = []
         for role_id in [1146375334170730548, 1145965467207467049, 1145959138602524672]:
             role = interaction.guild.get_role(role_id)
-            support_roles.append(role.mention)
-        return tuple(support_roles)
+            roles.append(role)
+        return tuple(roles)
 
 
 class PanelView(discord.ui.View):
