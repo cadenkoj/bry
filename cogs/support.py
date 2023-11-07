@@ -192,7 +192,10 @@ class DynamicToggle(
         filter = {"channel_id": interaction.channel_id}
         ticket = ticket_collection.find_one(filter)
 
-        creator = interaction.guild.get_member(ticket["user_id"])
+        creator_name = ticket["username"]
+        creator_id = ticket["user_id"]
+
+        creator = interaction.guild.get_member(creator_id)
         overwrites = interaction.channel.overwrites
 
         if creator:
@@ -226,7 +229,7 @@ class DynamicToggle(
         await interaction.message.edit(view=self.view)
 
         ticket_id = interaction.channel.name[-4:]
-        short_name = interaction.user.name[:5]
+        short_name = creator_name[:5]
         status = "ticket" if self.open else "closed"
         
         name = f'{status}-{short_name}-{ticket_id}'
