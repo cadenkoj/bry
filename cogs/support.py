@@ -54,8 +54,7 @@ class DynamicDelete(
         await interaction.channel.send(embed=embed)
 
         category = interaction.channel.category
-        channel = next(
-            (channel for channel in category.text_channels if channel.name == "📃・transcripts"), None)
+        channel = next((channel for channel in category.text_channels if channel.name == "📃・transcripts"), None)
 
         overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(
             view_channel=False)}
@@ -78,18 +77,12 @@ class DynamicDelete(
         current_time = discord.utils.utcnow()
         duration = humanize.naturaldelta(current_time - created_at)
 
-        embed.add_field(
-            name="Server", value=interaction.guild, inline=True)
-        embed.add_field(
-            name="Ticket", value=interaction.channel.name, inline=True)
-        embed.add_field(
-            name="Category", value=self.category, inline=True)
-        embed.add_field(
-            name="Creator", value=f"{creator} (`{creator.id}`)", inline=True)
-        embed.add_field(
-            name="Closer", value=f"{interaction.user} (`{interaction.user.id}`)", inline=True)
-        embed.add_field(
-            name="Duration", value=duration, inline=True)
+        embed.add_field(name="Server", value=interaction.guild, inline=True)
+        embed.add_field(name="Ticket", value=interaction.channel.name, inline=True)
+        embed.add_field(name="Category", value=self.category, inline=True)
+        embed.add_field(name="Creator", value=f"{creator} (`{creator.id}`)", inline=True)
+        embed.add_field(name="Closer", value=f"{interaction.user} (`{interaction.user.id}`)", inline=True)
+        embed.add_field(name="Duration", value=duration, inline=True)
 
         embed.set_author(name=f"Ticket Transcript", icon_url=TICKET_EMOJI)
 
@@ -104,10 +97,8 @@ class DynamicDelete(
         transcript_url = f"https://api-production-ce8c.up.railway.app/view?{params}"
         download_url = f"https://api-production-ce8c.up.railway.app/download?{params}"
 
-        view_transcript = discord.ui.Button(
-            emoji="\N{PAGE FACING UP}", label="View Transcript", url=transcript_url, style=discord.ButtonStyle.link)
-        download_transcript = discord.ui.Button(
-            emoji="\N{LINK SYMBOL}", label="Download Transcript", url=download_url, style=discord.ButtonStyle.link)
+        view_transcript = discord.ui.Button(emoji="\N{PAGE FACING UP}", label="View Transcript", url=transcript_url, style=discord.ButtonStyle.link)
+        download_transcript = discord.ui.Button(emoji="\N{LINK SYMBOL}", label="Download Transcript", url=download_url, style=discord.ButtonStyle.link)
 
         view.add_item(view_transcript)
         view.add_item(download_transcript)
@@ -169,8 +160,7 @@ class DynamicToggle(
 
         overwrites = {
             **interaction.channel.overwrites,
-            interaction.user: discord.PermissionOverwrite(
-                view_channel=not self.open)
+            interaction.user: discord.PermissionOverwrite(view_channel=not self.open)
         }
 
         await interaction.channel.edit(overwrites=overwrites)
@@ -219,18 +209,21 @@ class CreationModal(discord.ui.Modal):
     async def on_submit(self, interaction: discord.Interaction[Bot]):
         await interaction.response.defer(ephemeral=True)
 
-        category_name = f"{self.category} Tickets"
-        category = next(
-            (category for category in interaction.guild.categories if category.name == category_name), None)
+        support_roles = await self.get_support_roles(interaction)
 
-        overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(
-            view_channel=False)}
+        category_name = f"{self.category} Tickets"
+        category = next((category for category in interaction.guild.categories if category.name == category_name), None)
+
+        overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False)}
         if not category:
             category = await interaction.guild.create_category(category_name)
             await category.create_text_channel('📃・transcripts', overwrites=overwrites)
 
         user_overwrites = {
-            **overwrites, interaction.user: discord.PermissionOverwrite(view_channel=True)}
+            **overwrites,
+            interaction.user: discord.PermissionOverwrite(view_channel=True),
+            support_roles: discord.PermissionOverwrite(view_channel=True)
+        }
             
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
 
@@ -262,9 +255,18 @@ Support will be with you shortly.
         )
 
         view = ManageView(channel.id, self.category)
-        message = await channel.send(f"{interaction.user.mention} <@&1145959138602524672> <@&1146375334170730548> <@&1145965467207467049>", embed=embed, view=view)
+        mentions = " ".join(r.mention for r in support_roles)
+
+        message = await channel.send(f"{interaction.user.mention} {mentions}", embed=embed, view=view)
 
         await message.pin()
+
+    async def get_support_roles(self, interaction: discord.Interaction) -> tuple[discord.Role]:
+        support_roles = []
+        for role_id in [1146375334170730548, 1145965467207467049, 1145959138602524672]:
+            role = interaction.guild.get_role(role_id)
+            support_roles.append(role.mention)
+        return tuple(support_roles)
 
 
 class PanelView(discord.ui.View):
