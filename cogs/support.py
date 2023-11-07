@@ -228,7 +228,7 @@ class CreationModal(discord.ui.Modal):
 
         for role in support_roles:
             overwrite = {role: discord.PermissionOverwrite(view_channel=True)}
-            channel.edit(overwrites=overwrite)
+            await channel.edit(overwrites=overwrite)
             
         body = {"user_id": interaction.user.id, "channel_id": channel.id}
         update = {"$set": body}
