@@ -46,7 +46,7 @@ class DynamicDelete(
     async def callback(self, interaction: discord.Interaction[Bot]) -> None:
         await interaction.response.defer(ephemeral=True)
 
-        roles = get_support_roles(interaction.guild)
+        roles = await get_support_roles(interaction.guild)
         if all(role not in interaction.user.roles for role in roles):
             embed = discord.Embed(
                 color=0x599ae0,
@@ -194,7 +194,7 @@ class DynamicToggle(
 
         creator = interaction.guild.get_member(ticket["user_id"])
         overwrites = interaction.channel.overwrites
-        
+
         if creator:
             overwrites[creator] = discord.PermissionOverwrite(view_channel=not self.open)
 
