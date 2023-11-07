@@ -222,8 +222,10 @@ class CreationModal(discord.ui.Modal):
         user_overwrites = {
             **overwrites,
             interaction.user: discord.PermissionOverwrite(view_channel=True),
-            support_roles: discord.PermissionOverwrite(view_channel=True)
         }
+
+        for role in support_roles:
+            user_overwrites[role] = discord.PermissionOverwrite(view_channel=True)
             
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
 
@@ -259,7 +261,7 @@ Support will be with you shortly.
         )
 
         view = ManageView(channel.id, self.category)
-        mentions = " ".join(r.mention for r in support_roles)
+        mentions = " ".join([r.mention for r in support_roles])
 
         message = await channel.send(f"{interaction.user.mention} {mentions}", embed=embed, view=view)
 
