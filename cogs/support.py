@@ -54,7 +54,7 @@ class DynamicDelete(
             )
 
             embed.set_author(
-                name=f"Ticket Deletion Error",
+                name=f"Ticket Error",
                 icon_url=TICKET_EMOJI
             )
 
@@ -63,7 +63,7 @@ class DynamicDelete(
                 icon_url=interaction.guild.icon.url
             )
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.followup.send(embed=embed)
             return
 
         embed = discord.Embed(color=0x599ae0)
