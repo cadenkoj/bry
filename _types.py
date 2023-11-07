@@ -31,3 +31,6 @@ class Ticket(TypedDict):
     _id: NotRequired[ObjectId]
     user_id: int
     channel_id: int
+    username: str
+    category: str
+    open: bool

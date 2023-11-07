@@ -14,6 +14,13 @@ TICKET_EMOJI = 'https://cdn.discordapp.com/emojis/1169397900183351378.webp?size=
 LOADING_EMOJI = 'https://cdn.discordapp.com/emojis/1170402444627419146.gif?size=128'
 
 
+async def get_support_roles(guild: discord.Guild) -> tuple[discord.Role]:
+    roles = []
+    for role_id in [1146375334170730548, 1145965467207467049, 1145959138602524672]:
+        role = guild.get_role(role_id)
+        roles.append(role)
+    return tuple(roles)
+
 class DynamicDelete(
     discord.ui.DynamicItem[discord.ui.Button],
     template=r'category:(?P<category>[^:]+):channel:(?P<id>[0-9]+)',
@@ -38,6 +45,26 @@ class DynamicDelete(
 
     async def callback(self, interaction: discord.Interaction[Bot]) -> None:
         await interaction.response.defer(ephemeral=True)
+
+        roles = get_support_roles(interaction.guild)
+        if all(role not in interaction.user.roles for role in roles):
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"You do not have permission to delete this ticket."
+            )
+
+            embed.set_author(
+                name=f"Ticket Deletion Error",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
 
         embed = discord.Embed(color=0x599ae0)
 
@@ -67,9 +94,11 @@ class DynamicDelete(
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
         
         filter = {"channel_id": interaction.channel_id}
-        ticket = ticket_collection.find_one_and_delete(filter)
+        update = {"$set": {"open": False}}
+        ticket = ticket_collection.find_one_and_update(filter, update)
 
-        creator = interaction.guild.get_member(ticket['user_id'])
+        creator_name = ticket["username"]
+        creator_id = ticket["user_id"]
 
         embed = discord.Embed(color=0x599ae0)
 
@@ -80,7 +109,7 @@ class DynamicDelete(
         embed.add_field(name="Server", value=interaction.guild, inline=True)
         embed.add_field(name="Ticket", value=interaction.channel.name, inline=True)
         embed.add_field(name="Category", value=self.category, inline=True)
-        embed.add_field(name="Creator", value=f"{creator} (`{creator.id}`)", inline=True)
+        embed.add_field(name="Creator", value=f"{creator_name} (`{creator_id}`)", inline=True)
         embed.add_field(name="Closer", value=f"{interaction.user} (`{interaction.user.id}`)", inline=True)
         embed.add_field(name="Duration", value=duration, inline=True)
 
@@ -158,10 +187,16 @@ class DynamicToggle(
 
         message = await interaction.channel.send(embed=embed)
 
-        overwrites = {
-            **interaction.channel.overwrites,
-            interaction.user: discord.PermissionOverwrite(view_channel=not self.open)
-        }
+        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+
+        filter = {"channel_id": interaction.channel_id}
+        ticket = ticket_collection.find_one(filter)
+
+        creator = interaction.guild.get_member(ticket["user_id"])
+        overwrites = interaction.channel.overwrites
+        
+        if creator:
+            overwrites[creator] = discord.PermissionOverwrite(view_channel=not self.open)
 
         await interaction.channel.edit(overwrites=overwrites)
 
@@ -190,6 +225,13 @@ class DynamicToggle(
 
         await interaction.message.edit(view=self.view)
 
+        ticket_id = interaction.channel.name[-4:]
+        short_name = interaction.user.name[:5]
+        status = "ticket" if self.open else "closed"
+        
+        name = f'{status}-{short_name}-{ticket_id}'
+        await interaction.channel.edit(name=name)
+
 
 class ManageView(discord.ui.View):
     def __init__(self, channel_id: int, category: str):
@@ -209,7 +251,7 @@ class CreationModal(discord.ui.Modal):
     async def on_submit(self, interaction: discord.Interaction[Bot]):
         await interaction.response.defer(ephemeral=True)
 
-        support_roles = await self.get_support_roles(interaction)
+        support_roles = await get_support_roles(interaction.guild)
 
         category_name = f"{self.category} Tickets"
         category = next((category for category in interaction.guild.categories if category.name == category_name), None)
@@ -228,13 +270,47 @@ class CreationModal(discord.ui.Modal):
             user_overwrites[role] = discord.PermissionOverwrite(view_channel=True)
             
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+        ticket_count = str(ticket_collection.count_documents({}))
 
-        ticket_id = str(ticket_collection.count_documents({}))
-        channel = await category.create_text_channel(f'ticket-{interaction.user.name[:5]}-{ticket_id.rjust(4, "0")}', overwrites=user_overwrites)
+        filter = {"user_id": interaction.user.id, "category": self.category, "open": True}
+        existing_ticket = ticket_collection.find_one(filter)
 
-        body = {"user_id": interaction.user.id, "channel_id": channel.id}
-        update = {"$set": body}
-        ticket_collection.update_one(body, update, upsert=True)
+        if existing_ticket:
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"You already have an open ticket at <#{existing_ticket['channel_id']}>."
+            )
+
+            embed.set_author(
+                name=f"{self.category} Ticket",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        ticket_id = ticket_count.rjust(4, "0")
+        short_name = interaction.user.name[:5]
+        
+        name = f'ticket-{short_name}-{ticket_id}'
+        channel = await category.create_text_channel(name, overwrites=user_overwrites)
+
+        update = {
+            "$set": {
+                "user_id": interaction.user.id,
+                "channel_id": channel.id,
+                "username": interaction.user.name,
+                "category": self.category,
+                "open": True
+            }
+        }
+
+        ticket_collection.update_one(filter, update, upsert=True)
 
         embed = discord.Embed(
             color=0x599ae0,
@@ -251,7 +327,7 @@ Support will be with you shortly.
         )
 
         embed.set_author(
-            name=f"Ticket #{ticket_id} ({self.category})",
+            name=f"Ticket #{ticket_count} ({self.category})",
             icon_url=TICKET_EMOJI
         )
 
@@ -266,13 +342,6 @@ Support will be with you shortly.
         message = await channel.send(f"{interaction.user.mention} {mentions}", embed=embed, view=view)
 
         await message.pin()
-
-    async def get_support_roles(self, interaction: discord.Interaction) -> tuple[discord.Role]:
-        roles = []
-        for role_id in [1146375334170730548, 1145965467207467049, 1145959138602524672]:
-            role = interaction.guild.get_role(role_id)
-            roles.append(role)
-        return tuple(roles)
 
 
 class PanelView(discord.ui.View):
