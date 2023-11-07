@@ -217,14 +217,14 @@ class CreationModal(discord.ui.Modal):
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
 
         ticket_id = str(ticket_collection.count_documents({}))
+
+        user_overwrites = {**overwrites, interaction.user: discord.PermissionOverwrite(view_channel=True)}
         channel = await category.create_text_channel(f'ticket-{interaction.user.name[:5]}-{ticket_id.rjust(4, "0")}', overwrites=user_overwrites)
 
         overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False)}
         if not category:
             category = await interaction.guild.create_category(category_name)
             await category.create_text_channel('📃・transcripts', overwrites=overwrites)
-
-        user_overwrites = {**overwrites, interaction.user: discord.PermissionOverwrite(view_channel=True)}
 
         for role in support_roles:
             overwrite = {role: discord.PermissionOverwrite(view_channel=True)}
