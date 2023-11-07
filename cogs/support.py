@@ -251,6 +251,10 @@ Support will be with you shortly.
 """,
         )
 
+        embed.set_thumbnail(
+            url=interaction.user.display_avatar.url
+        )
+
         embed.set_author(
             name=f"Ticket #{ticket_id} ({self.category})",
             icon_url=TICKET_EMOJI
