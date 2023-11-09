@@ -13,7 +13,7 @@ RUN apt-get install -y curl git python3.11 python3-distutils && \
 
 WORKDIR /app
 
-COPY requirements.txt /app/
+COPY . /app
 
 RUN pip install -r requirements.txt
 
