@@ -1,5 +1,7 @@
 discord.py @ git+https://github.com/Rapptz/discord.py@933460c3d46ed6a4af3dbad5701e95de2354628d
+gspread==5.12.0
 humanize==4.8.0
+oauth2client==4.1.3
 pymongo==4.5.0
 python-dotenv==1.0.0
 requests==2.31.0
