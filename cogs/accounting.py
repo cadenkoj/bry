@@ -226,7 +226,7 @@ Payment Method → {method.name}
             name = stock_item["name"]
             price = stock_item["price"]
 
-            stock_embed.add_field(name=f"{name} (${price})", value="")
+            stock_embed.add_field(name=f"{name} (${price:,})", value="")
         stock_embed.add_field(name="Miscellaneous", value="")
 
         for stock_item in stock_collection.find({"name": {"$not": {"$regex": "Set$"}}}).sort("price", pymongo.DESCENDING):
@@ -237,7 +237,7 @@ Payment Method → {method.name}
             set_name, _ = name.rsplit(" ", 1)
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
-            field.value += f"\n- **{name}** ({price_fmt(price)}) — **{quantity}x**"
+            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
             stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
 
             if quantity < 1:
@@ -288,7 +288,7 @@ Payment Method → {method.name}
         )
 
         restock_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
-        restock_embed.set_footer(text=price_fmt(price))
+        restock_embed.set_footer(text=f"${price:,}")
 
         await interaction.followup.send(embed=restock_embed)
 
@@ -361,7 +361,7 @@ Payment Method → {method.name}
 
         add_item_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"Added **{quantity}x** **{name}** to the stock for **{price_fmt(price)}**.",
+            description=f"Added **{quantity}x** **{name}** to the stock for **{price:,}**.",
             timestamp=discord.utils.utcnow(),
         )
 
@@ -418,7 +418,7 @@ Payment Method → {method.name}
             old_price = updated_item["price"]
 
             updated_item["price"] = price
-            description += f"\nPrice → {price_fmt(price_fmt)}"
+            description += f"\nPrice → ${price:,}"
 
             if old_price != price:
                 channel = self.bot.get_channel(1166520967745511454)
@@ -427,7 +427,7 @@ Payment Method → {method.name}
                 price_embed = discord.Embed(
                     color=0x77ABFC,
                     title=f"{price_diff} Price Updated",
-                    description=f"**{updated_item['name']}** has been updated from **${price_fmt(old_price)}** to **{price_fmt(price)}**.",
+                    description=f"**{updated_item['name']}** has been updated from **${old_price:,}** to **{price:,}**.",
                 )
 
                 await channel.send(content="<@&1167290712220504064>", embed=price_embed)
@@ -481,7 +481,7 @@ Payment Method → {method.name}
         )
 
         remove_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
-        remove_item_embed.set_footer(text=price_fmt(price))
+        remove_item_embed.set_footer(text=f"${price:,}")
 
         await interaction.response.send_message(embed=remove_item_embed)
 
@@ -527,7 +527,7 @@ Payment Method → {method.name}
         combined_earnings = sum([log["item"]["price"] for log in logs])
         combined_sales = starting_sales + log_collection.count_documents({})
 
-        await earned_channel.edit(name=f"Earned: {price_fmt(combined_earnings)}")
+        await earned_channel.edit(name=f"Earned: ${combined_earnings:,}")
         await sales_channel.edit(name=f"Sales: {combined_sales:,}")
 
     @tasks.loop(minutes=10)
@@ -554,7 +554,7 @@ Payment Method → {method.name}
             set_name, _ = name.rsplit(" ", 1)
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
-            field.value += f"\n- **{name}** ({price_fmt(price)}) — **{quantity}x**"
+            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
             stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
 
             if quantity < 1:
