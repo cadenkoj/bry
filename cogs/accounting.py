@@ -15,7 +15,7 @@ from utils import write_to_ws
 
 OWNER_IDS = [525189552986521613, 1092543812527738911, 997958244452544582]
 
-locale.setlocale(locale.LC_ALL, '')
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 price_fmt = lambda price: locale.currency(price, grouping=True)
 
 class Accounting(commands.Cog):
