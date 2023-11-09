@@ -1,3 +1,4 @@
+import asyncio
 import re
 import requests
 import humanize
@@ -64,6 +65,8 @@ class DynamicDelete(
             )
 
             await interaction.followup.send(embed=embed)
+            await asyncio.sleep(5)
+            await interaction.delete_original_response()
             return
 
         embed = discord.Embed(color=0x599ae0)
@@ -172,6 +175,26 @@ class DynamicToggle(
 
     async def callback(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer(ephemeral=True)
+
+        roles = await get_support_roles(interaction.guild)
+        if all(role not in interaction.user.roles for role in roles):
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"You do not have permission to close this ticket."
+            )
+
+            embed.set_author(
+                name=f"Ticket Error",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.followup.send(embed=embed)
+            return
 
         embed = discord.Embed(color=0x599ae0)
 
@@ -380,10 +403,31 @@ class Support(commands.Cog):
 
     @ticket.command()
     @apc.guild_only()
+    @apc.default_permissions(manage_guild=True)
     async def panel(self, interaction: discord.Interaction) -> None:
         """Sends the support panel."""
 
         await interaction.response.defer(ephemeral=True)
+
+        roles = await get_support_roles(interaction.guild)
+        if all(role not in interaction.user.roles for role in roles):
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"You do not have permission to send a ticket panel."
+            )
+
+            embed.set_author(
+                name=f"Ticket Error",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.followup.send(embed=embed)
+            return
 
         embed = discord.Embed(
             color=0x599ae0,
@@ -395,9 +439,224 @@ class Support(commands.Cog):
         await interaction.channel.send(embed=embed, view=view)
         await interaction.delete_original_response()
 
+    @ticket.command()
+    @apc.guild_only()
+    async def rename(self, interaction: discord.Interaction, name: str) -> None:
+        """Renames a support ticket."""
+
+        await interaction.response.defer(ephemeral=True)
+
+        roles = await get_support_roles(interaction.guild)
+        if all(role not in interaction.user.roles for role in roles):
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"You do not have permission to rename this ticket."
+            )
+
+            embed.set_author(
+                name=f"Ticket Error",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.followup.send(embed=embed)
+            return
+
+        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+
+        filter = {"channel_id": interaction.channel_id}
+        ticket = ticket_collection.find_one(filter)
+
+        if ticket == None:
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"This channel is not a ticket."
+            )
+
+            embed.set_author(
+                name=f"Ticket Error",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.followup.send(embed=embed)
+            return
+
+        await interaction.channel.edit(name=name)
+
+        embed = discord.Embed(
+            color=0x599ae0,
+            description=f"The ticket {interaction.channel.mention} has been renamed by {interaction.user.mention}."
+        )
+
+        embed.set_author(
+            name=f"Ticket Renamed",
+            icon_url=TICKET_EMOJI
+        )
+
+        embed.set_footer(
+            text=interaction.guild,
+            icon_url=interaction.guild.icon.url
+        )
+
+        await interaction.followup.send(embed=embed)
+
+    @ticket.command()
+    @apc.guild_only()
+    async def adduser(self, interaction: discord.Interaction, user: discord.Member) -> None:
+        """Adds a user to a support ticket."""
+
+        await interaction.response.defer(ephemeral=True)
+
+        roles = await get_support_roles(interaction.guild)
+        if all(role not in interaction.user.roles for role in roles):
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"You do not have permission to add users to this ticket."
+            )
+
+            embed.set_author(
+                name=f"Ticket Error",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.followup.send(embed=embed)
+            return
+
+        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+
+        filter = {"channel_id": interaction.channel_id}
+        ticket = ticket_collection.find_one(filter)
+
+        if ticket == None:
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"This channel is not a ticket."
+            )
+
+            embed.set_author(
+                name=f"Ticket Error",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.followup.send(embed=embed)
+            return
+
+        overwrites = interaction.channel.overwrites
+        overwrites[user] = discord.PermissionOverwrite(view_channel=True)
+
+        await interaction.channel.edit(overwrites=overwrites)
+
+        embed = discord.Embed(
+            color=0x599ae0,
+            description=f"{user.mention} has been added to the ticket {interaction.channel.mention} by {interaction.user.mention}."
+        )
+
+        embed.set_author(
+            name=f"Ticket User Added",
+            icon_url=TICKET_EMOJI
+        )
+
+        embed.set_footer(
+            text=interaction.guild,
+            icon_url=interaction.guild.icon.url
+        )
+
+        await interaction.followup.send(embed=embed)
+
+    @ticket.command()
+    @apc.guild_only()
+    async def removeuser(self, interaction: discord.Interaction, user: discord.Member) -> None:
+        """Removes a user from a support ticket."""
+
+        await interaction.response.defer(ephemeral=True)
+
+        roles = await get_support_roles(interaction.guild)
+        if all(role not in interaction.user.roles for role in roles):
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"You do not have permission to remove users from this ticket."
+            )
+
+            embed.set_author(
+                name=f"Ticket Error",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.followup.send(embed=embed)
+            return
+
+        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+
+        filter = {"channel_id": interaction.channel_id}
+        ticket = ticket_collection.find_one(filter)
+
+        if ticket == None:
+            embed = discord.Embed(
+                color=0x599ae0,
+                description=f"This channel is not a ticket."
+            )
+
+            embed.set_author(
+                name=f"Ticket Error",
+                icon_url=TICKET_EMOJI
+            )
+
+            embed.set_footer(
+                text=interaction.guild,
+                icon_url=interaction.guild.icon.url
+            )
+
+            await interaction.followup.send(embed=embed)
+            return
+
+        overwrites = interaction.channel.overwrites
+        overwrites[user] = discord.PermissionOverwrite(view_channel=False)
+
+        await interaction.channel.edit(overwrites=overwrites)
+
+        embed = discord.Embed(
+            color=0x599ae0,
+            description=f"{user.mention} has been removed from the ticket {interaction.channel.mention} by {interaction.user.mention}."
+        )
+
+        embed.set_author(
+            name=f"Ticket User Removed",
+            icon_url=TICKET_EMOJI
+        )
+
+        embed.set_footer(
+            text=interaction.guild,
+            icon_url=interaction.guild.icon.url
+        )
+
+        await interaction.followup.send(embed=embed)
+
 
 async def setup(bot: Bot):
     bot.add_view(PanelView())
-    bot.add_dynamic_items(DynamicDelete)
-    bot.add_dynamic_items(DynamicToggle)
+    bot.add_dynamic_items(DynamicDelete, DynamicToggle)
     await bot.add_cog(Support(bot))

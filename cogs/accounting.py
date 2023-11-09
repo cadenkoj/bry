@@ -1,4 +1,3 @@
-import re
 from typing import Optional
 
 import discord
@@ -7,12 +6,17 @@ from discord import app_commands as apc
 from discord.ext import commands, tasks
 import pymongo
 from pymongo.collection import Collection
+import locale
 
 from _types import Log, Stock
 from bot import Bot
+from utils import write_to_ws
+
 
 OWNER_IDS = [525189552986521613, 1092543812527738911, 997958244452544582]
 
+locale.setlocale(locale.LC_ALL, '')
+price_fmt = lambda price: locale.currency(price, grouping=True)
 
 class Accounting(commands.Cog):
     """Commands for accounting stock and payment logs."""
@@ -67,7 +71,7 @@ class Accounting(commands.Cog):
         item1: str
             Item 1
         discount: Optional[int]
-            The discount applied to the purchase, NOT PER ITEM.
+            The discount applied to the purchase, not per-item.
         item2: Optional[str]
             Item 2
         item3: Optional[str]
@@ -90,24 +94,22 @@ class Accounting(commands.Cog):
         log_collection: Collection[Log] = self.bot.database.get_collection("logs")
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
 
-        combined_items = [item1, item2, item3, item4, item5]
-        item_ids: list[str] = [item for item in combined_items if item is not None]
+        item_ids: list[str] = [item for item in [item1, item2, item3, item4, item5] if item is not None]
+        item_details: list[tuple[str, int]] = []
 
-        total_price = 0 - discount
-        item_names: list[str] = []
-
-        invalid_items: list[str] = []
-        out_of_stock: list[str] = []
+        total_price = 0
+        invalid_items = 0
+        out_of_stock = 0
 
         for item in item_ids:
             try:
                 stock_item = stock_collection.find_one({"_id": ObjectId(item)})
             except Exception:
-                invalid_items.append(item)
+                invalid_items += 1
                 continue
 
             if stock_item is None:
-                invalid_items.append(item)
+                invalid_items += 1
                 continue
 
             name = stock_item["name"]
@@ -115,11 +117,11 @@ class Accounting(commands.Cog):
             quantity = stock_item["quantity"]
 
             if quantity < 1:
-                out_of_stock.append(name)
+                out_of_stock += 1
                 continue
 
             total_price += price
-            item_names.append(name)
+            item_details.append((name, price))
 
             stock_collection.update_one(stock_item, {"$inc": {"quantity": -1}})
 
@@ -127,6 +129,17 @@ class Accounting(commands.Cog):
             log[method.value] = info
 
             log_collection.insert_one(log)
+
+        ws_reaction = '\N{WHITE HEAVY CHECK MARK}'
+        if item_details:
+            for name, price in item_details:
+                itemized_discount = discount / len(item_details)
+                total_price -= itemized_discount
+                
+                try:
+                    write_to_ws(username, customer.id, name, price - itemized_discount)
+                except Exception:
+                    ws_reaction = '\N{CROSS MARK}'
 
         user_logs = log_collection.find({"user_id": customer.id})
         log_count = log_collection.count_documents({"user_id": customer.id})
@@ -147,26 +160,24 @@ class Accounting(commands.Cog):
         if total_spent >= 1000:
             notable_role = interaction.guild.get_role(1145959137453285416)
             await customer.add_roles(notable_role)
-
-        percent = round(discount / total_price + discount, 2)
-        discount_str = f'(-{percent}%)' if discount else ""
-
+            
+        item_names = [name for name, _ in item_details]
         log_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **${total_price:,}** {discount_str}.",
+            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **${price_fmt(total_price)}** (-${price_fmt(discount)}).",
         )
 
         log_embed.set_author(name=f"{customer}", icon_url=f"{customer.display_avatar.url}")
         log_embed.add_field(name=f"__Username__", value=username, inline=True)
         log_embed.add_field(name=f"__{method.name}__", value=info, inline=True)
-        log_embed.add_field(name=f"__Total Spent__", value=f"${total_spent:,}", inline=True)
+        log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)
         log_embed.set_footer(text=f"Transaction #{log_count}")
 
         chat_embed = discord.Embed(
             color=0x77ABFC,
             description=f"""**__Info__**
 Items → {", ".join(item_names)}
-Total Price → ${total_price:,} {discount_str}
+Total Price → {price_fmt(total_price)} (-{price_fmt(discount)})
 Username → {username}
 Payment Method → {method.name}
             """,
@@ -179,20 +190,22 @@ Payment Method → {method.name}
             description="**__Failed__**",
         )
 
-        if out_of_stock:
-            error_embed.description += f"\nOut of Stock → {', '.join(out_of_stock)}"
-            error_embed.set_footer(text=f"Tip: Use /fillstock to restock every item")
-        if invalid_items:
-            error_embed.description += f"\nInvalid Items → {len(invalid_items)}"
-            error_embed.set_footer(text=f"Make sure to select the item from the list")
+        if out_of_stock > 0:
+            error_embed.description += f"\n**{out_of_stock}** Out of Stock"
+            error_embed.set_footer(text=f"Use /fillstock to restock all items")
+        if invalid_items > 0:
+            error_embed.description += f"\n**{invalid_items}** Invalid Item{'s' if invalid_items > 1 else ''}"
+            error_embed.set_footer(text=f"Select items from the list")
 
         embeds = []
         if invalid_items or out_of_stock:
             embeds.append(error_embed)
-        if item_names:
+        if item_details:
             embeds.append(chat_embed)
             await customer.add_roles(customer_role)
-            await log_channel.send(embed=log_embed)
+
+            message = await log_channel.send(embed=log_embed)
+            await message.add_reaction(ws_reaction)
 
         await interaction.followup.send(embeds=embeds)
 
@@ -224,7 +237,7 @@ Payment Method → {method.name}
             set_name, _ = name.rsplit(" ", 1)
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
-            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
+            field.value += f"\n- **{name}** ({price_fmt(price)}) — **{quantity}x**"
             stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
 
             if quantity < 1:
@@ -275,7 +288,7 @@ Payment Method → {method.name}
         )
 
         restock_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
-        restock_embed.set_footer(text=f"${price:,}")
+        restock_embed.set_footer(text=price_fmt(price))
 
         await interaction.followup.send(embed=restock_embed)
 
@@ -348,7 +361,7 @@ Payment Method → {method.name}
 
         add_item_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"Added **{quantity}x** **{name}** to the stock for **${price:,}**.",
+            description=f"Added **{quantity}x** **{name}** to the stock for **{price_fmt(price)}**.",
             timestamp=discord.utils.utcnow(),
         )
 
@@ -405,7 +418,7 @@ Payment Method → {method.name}
             old_price = updated_item["price"]
 
             updated_item["price"] = price
-            description += f"\nPrice → ${price:,}"
+            description += f"\nPrice → {price_fmt(price_fmt)}"
 
             if old_price != price:
                 channel = self.bot.get_channel(1166520967745511454)
@@ -414,7 +427,7 @@ Payment Method → {method.name}
                 price_embed = discord.Embed(
                     color=0x77ABFC,
                     title=f"{price_diff} Price Updated",
-                    description=f"**{updated_item['name']}** has been updated from **${old_price:,}** to **${price:,}**.",
+                    description=f"**{updated_item['name']}** has been updated from **${price_fmt(old_price)}** to **{price_fmt(price)}**.",
                 )
 
                 await channel.send(content="<@&1167290712220504064>", embed=price_embed)
@@ -468,7 +481,7 @@ Payment Method → {method.name}
         )
 
         remove_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
-        remove_item_embed.set_footer(text=f"${price:,}")
+        remove_item_embed.set_footer(text=price_fmt(price))
 
         await interaction.response.send_message(embed=remove_item_embed)
 
@@ -514,7 +527,7 @@ Payment Method → {method.name}
         combined_earnings = sum([log["item"]["price"] for log in logs])
         combined_sales = starting_sales + log_collection.count_documents({})
 
-        await earned_channel.edit(name=f"Earned: ${combined_earnings:,}")
+        await earned_channel.edit(name=f"Earned: {price_fmt(combined_earnings)}")
         await sales_channel.edit(name=f"Sales: {combined_sales:,}")
 
     @tasks.loop(minutes=10)
@@ -541,7 +554,7 @@ Payment Method → {method.name}
             set_name, _ = name.rsplit(" ", 1)
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
-            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
+            field.value += f"\n- **{name}** ({price_fmt(price)}) — **{quantity}x**"
             stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
 
             if quantity < 1:
