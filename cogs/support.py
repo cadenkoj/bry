@@ -2,6 +2,7 @@ import asyncio
 import re
 import requests
 import humanize
+import asyncio
 
 import discord
 from discord import app_commands as apc
@@ -136,6 +137,7 @@ class DynamicDelete(
         view.add_item(download_transcript)
 
         await channel.send(embed=embed, view=view)
+        await asyncio.sleep(2)
         await interaction.channel.delete()
 
 
