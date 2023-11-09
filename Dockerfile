@@ -14,6 +14,6 @@ WORKDIR /app
 
 COPY requirements.txt /app/
 
-RUN py -3 -m pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
-CMD ["python3", "main.py"]
+CMD ["python3.11", "main.py"]
