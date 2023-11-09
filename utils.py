@@ -9,7 +9,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import locale
 
-locale.setlocale(locale.LC_ALL, '')
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 def fetch_roblox_id(username: str) -> int | None:
     res = requests.get(f"https://users.roblox.com/v1/users/search?keyword={username}")
