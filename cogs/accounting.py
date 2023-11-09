@@ -162,9 +162,11 @@ class Accounting(commands.Cog):
             await customer.add_roles(notable_role)
             
         item_names = [name for name, _ in item_details]
+        discount_str = f" (-{price_fmt(discount)})" if discount > 0 else ""
+
         log_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **${price_fmt(total_price)}** (-${price_fmt(discount)}).",
+            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total_price)}** {discount_str}.",
         )
 
         log_embed.set_author(name=f"{customer}", icon_url=f"{customer.display_avatar.url}")
@@ -177,7 +179,7 @@ class Accounting(commands.Cog):
             color=0x77ABFC,
             description=f"""**__Info__**
 Items → {", ".join(item_names)}
-Total Price → {price_fmt(total_price)} (-{price_fmt(discount)})
+Total Price → {price_fmt(total_price)} {discount_str}
 Username → {username}
 Payment Method → {method.name}
             """,
