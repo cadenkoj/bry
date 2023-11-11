@@ -67,7 +67,7 @@ class DynamicDelete(
 
             await interaction.followup.send(embed=embed)
             await asyncio.sleep(5)
-            await interaction.delete_original_response()
+            await interaction.followup.delete()
             return
 
         embed = discord.Embed(color=0x599ae0)
