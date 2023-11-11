@@ -239,11 +239,11 @@ Payment Method → {method.name}
             set_name, _ = name.rsplit(" ", 1)
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
-            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
-            stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
-
             if quantity < 1:
                 continue
+
+            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
+            stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
 
         if not stock_embed.fields[-1].value:
             stock_embed.remove_field(-1)
@@ -556,11 +556,11 @@ Payment Method → {method.name}
             set_name, _ = name.rsplit(" ", 1)
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
-            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
-            stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
-
             if quantity < 1:
                 continue
+
+            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
+            stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
 
         if not stock_embed.fields[-1].value:
             stock_embed.remove_field(-1)
