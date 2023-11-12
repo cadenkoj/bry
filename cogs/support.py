@@ -437,7 +437,7 @@ class Support(commands.Cog):
 
 <:BS_Crypto:1146371947207335947> ▹ Crypto (LTC, BTC, ETH)
 
-<:BS_Sshf:1172691541366681681> ▹ Limited Items (100k+ Value)
+<:BS_Sshf:1172691541366681681> ▹ Limited Items (150k+ Value)
 """
         )
 
