@@ -18,7 +18,7 @@ LOADING_EMOJI = 'https://cdn.discordapp.com/emojis/1170402444627419146.gif?size=
 
 async def get_support_roles(guild: discord.Guild) -> tuple[discord.Role]:
     roles = []
-    for role_id in [1146375334170730548, 1145965467207467049, 1145959138602524672]:
+    for role_id in [1146375334170730548, 1145965467207467049, 1173364698922627275]:
         role = guild.get_role(role_id)
         roles.append(role)
     return tuple(roles)
@@ -433,9 +433,19 @@ class Support(commands.Cog):
 
         embed = discord.Embed(
             color=0x599ae0,
-            title="Support Panel",
-            description="Click a button below to create a support ticket."
+            title="Payment Info",
+            description="""
+<:BS_CashApp:1146371930228801566> ▹ Cash App (Cash Balance)
+
+<:BS_PayPal:1146371958024441886> ▹ PayPal (Friends & Family)
+
+<:BS_Crypto:1146371947207335947> ▹ Crypto (LTC, BTC, ETH)
+
+<:BS_Sshf:1172691541366681681> ▹ Limited Items
+"""
         )
+
+        embed.set_footer(text="Click a button below to create a ticket")
 
         view = PanelView()
         await interaction.channel.send(embed=embed, view=view)
