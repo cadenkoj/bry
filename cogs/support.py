@@ -11,11 +11,11 @@ from pymongo.collection import Collection
 
 from _types import Ticket
 from bot import Bot
-from constants import TICKET_SUPPORT
+from constants import *
 
 async def get_support_roles(guild: discord.Guild) -> tuple[discord.Role]:
     roles = []
-    for role_id in TICKET_SUPPORT:
+    for role_id in SUPPORT_ROLES:
         role = guild.get_role(role_id)
         roles.append(role)
     return tuple(roles)

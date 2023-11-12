@@ -429,7 +429,7 @@ Payment Method → {method.name}
                 price_embed = discord.Embed(
                     color=0x77ABFC,
                     title=f"{price_diff} Price Updated",
-                    description=f"**{updated_item['name']}** has been updated from **${old_price:,}** to **{price:,}**.",
+                    description=f"**{updated_item['name']}** has been updated from **${old_price:,}** to **${price:,}**.",
                 )
 
                 await channel.send(content="<@&1167290712220504064>", embed=price_embed)
