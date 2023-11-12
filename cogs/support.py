@@ -11,14 +11,11 @@ from pymongo.collection import Collection
 
 from _types import Ticket
 from bot import Bot
-
-TICKET_EMOJI = 'https://cdn.discordapp.com/emojis/1169397900183351378.webp?size=128'
-LOADING_EMOJI = 'https://cdn.discordapp.com/emojis/1170402444627419146.gif?size=128'
-
+from constants import TICKET_SUPPORT
 
 async def get_support_roles(guild: discord.Guild) -> tuple[discord.Role]:
     roles = []
-    for role_id in [1146375334170730548, 1145965467207467049, 1173364698922627275]:
+    for role_id in TICKET_SUPPORT:
         role = guild.get_role(role_id)
         roles.append(role)
     return tuple(roles)
@@ -440,7 +437,7 @@ class Support(commands.Cog):
 
 <:BS_Crypto:1146371947207335947> ▹ Crypto (LTC, BTC, ETH)
 
-<:BS_Sshf:1172691541366681681> ▹ Limited Items
+<:BS_Sshf:1172691541366681681> ▹ Limited Items (100k+ Value)
 """
         )
 
