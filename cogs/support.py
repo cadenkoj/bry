@@ -85,12 +85,11 @@ class DynamicDelete(
         await interaction.channel.send(embed=embed)
 
         category = interaction.channel.category
-        channel = next((channel for channel in category.text_channels if channel.name == "📃・transcripts"), None)
+        channel = next((channel for channel in category.text_channels if channel.name == "transcripts"), None)
 
-        overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(
-            view_channel=False)}
+        overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False)}
         if not channel:
-            await category.create_text_channel('📃・transcripts', overwrites=overwrites)
+            channel = await category.create_text_channel('transcripts', overwrites=overwrites)
 
         params = {"channel_id": interaction.channel_id, "category": self.category}
         requests.get(f"http://api.railway.internal:8080/save", params)
@@ -287,7 +286,7 @@ class CreationModal(discord.ui.Modal):
         overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False)}
         if not category:
             category = await interaction.guild.create_category(category_name)
-            await category.create_text_channel('📃・transcripts', overwrites=overwrites)
+            await category.create_text_channel('transcripts', overwrites=overwrites)
 
         user_overwrites = {
             **overwrites,
