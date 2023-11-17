@@ -113,7 +113,7 @@ class Accounting(commands.Cog):
 
         await interaction.followup.send(embed=embed)
 
-    @commands.hybrid()
+    @commands.hybrid_command()
     @commands.guild_only()
     async def stock(self, ctx: commands.Context) -> None:
         """Displays the curent available stock."""
