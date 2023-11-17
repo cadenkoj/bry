@@ -25,9 +25,7 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 def fetch_roblox_id(username: str) -> int | None:
     try:
         payload = json.dumps({
-          "usernames": [
-            "KojiOdyssey"
-          ],
+          "usernames": [username],
           "excludeBannedUsers": True
         })
 
