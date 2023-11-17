@@ -1,5 +1,6 @@
 
 import asyncio
+import json
 import locale
 import logging
 import os
@@ -23,12 +24,18 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 def fetch_roblox_id(username: str) -> int | None:
     try:
-        data = {
-            "usernames": [username],
-            "excludeBannedUsers": True,
+        payload = json.dumps({
+          "usernames": [
+            "KojiOdyssey"
+          ],
+          "excludeBannedUsers": True
+        })
+
+        headers = {
+          'Content-Type': 'application/json'
         }
 
-        res = requests.post(f"https://users.roblox.com/v1/usernames/users", data)
+        res = requests.post(f"https://users.roblox.com/v1/usernames/users", data=payload, headers=headers)
         res.raise_for_status()
 
         data = res.json()
