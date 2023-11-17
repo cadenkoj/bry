@@ -15,7 +15,7 @@ RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-ke
     apt-get update && \
     apt-get install -y google-chrome-stable
 
-RUN CHROMEDRIVER_VERSION="119.0.6045.160" && \
+RUN CHROMEDRIVER_VERSION="114.0.5735.90" && \
     curl -O https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip && \
     unzip chromedriver_linux64.zip -d /usr/local/bin/ && \
     rm chromedriver_linux64.zip && \
