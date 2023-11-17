@@ -107,35 +107,39 @@ def write_to_ws(username: str, user_id: int, item: str, price: int) -> None:
 
     ws.update_cell(header_row, 7, locale.currency(total_cost, grouping=True))
 
+service = webdriver.ChromeService()
+options = webdriver.ChromeOptions()
+options.add_argument('--headless')
+driver = webdriver.Chrome(service=service, options=options)
+
 async def parse_cash_app_receipt(url: str) -> tuple[str, bool]:
     parsed_url = urlparse(url)
 
     if parsed_url.netloc != "cash.app":
         return "Invalid URL. Please provide a valid Cash App web receipt.", False
     
-    service = webdriver.ChromeService()
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-
-    driver = webdriver.Chrome(service=service, options=options)
-
     try:
         driver.get(url)
 
-        header_info = EC.presence_of_element_located((By.XPATH, "//h4[contains(text(),'Payment to $ys2005')]"))
+        header_info = EC.presence_of_element_located((By.XPATH, "//h4[contains(text(),'Payment to $ehxpulse')]"))
         WebDriverWait(driver, 5).until(header_info)
 
-        amount_info = driver.find_element(By.XPATH, "//dt[contains(text(),'Amount')]")
-        source_info = driver.find_element(By.XPATH, "//dt[contains(text(),'Source')]")
+        note = driver.find_element(By.XPATH, "//p[contains(text(),'For')]").text
+        info = driver.find_elements(By.TAG_NAME, "dd")
 
-        if header_info and source_info.text == "Cash":
-            return amount_info.text, True
+        amount = info[0].text
+        source = info[1].text
+
+        if note != "For gift":
+            return "Invalid note. Please wait for refund and send with the note \"gift\".", False
+        
+        if source != "Cash":
+            return "Invalid source. Please wait for refund and send with Cash Balance.", False
+
+        return amount, True
 
     except TimeoutException:
         return "Timed out reading Cash App web receipt.", False
-
-    finally:
-        driver.quit()
 
 def parse_human_duration(duration: str) -> timedelta:
     components = {
