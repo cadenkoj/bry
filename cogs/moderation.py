@@ -252,7 +252,7 @@ class Moderation(commands.Cog):
             raise commands.BadArgument("Amount must be less than 100.")
         
         purged_messages: list[discord.Message] = []
-        if user:
+        if user is not None:
             is_author = lambda m: m.author.id == user.id
             is_recent = lambda m: discord.utils.utcnow() - m.created_at < timedelta(weeks=2)
 
