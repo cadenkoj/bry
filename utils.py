@@ -100,10 +100,10 @@ def write_to_ws(username: str, user_id: int, item: str, price: int) -> None:
     total_cost = price
     header_row = 0
     for i, row in enumerate(existing_data, start=2):
-        if row[0] == date:
-            total_cost += locale.atof(row[5].lstrip("$").replace(",", ""))
         if row[0] == "Date":
             header_row = i
+        if row[0] == date:
+            total_cost += float(re.sub(r'[\$,]', '', row[5]))
 
     ws.update_cell(header_row, 7, locale.currency(total_cost, grouping=True))
 
