@@ -1,13 +1,15 @@
+import asyncio
 import logging
+import traceback
 
 import discord
 from discord import app_commands as apc
 from discord.ext import commands
 
 from bot import Bot
+from constants import *
 
 _log = logging.getLogger(__name__)
-
 
 class Event(commands.Cog):
     """Events for handling listeners and startup."""
@@ -18,6 +20,11 @@ class Event(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
+        """Called when the bot is finished starting up."""
+
+        from config import get_config
+        self.bot.config = get_config(self.bot)
+    
         _log.info("Logged in as %s (User ID: %d).", self.bot.user, self.bot.user.id)
 
         before_commands = self.bot.tree.get_commands()
@@ -34,10 +41,12 @@ class Event(commands.Cog):
 
     @commands.Cog.listener()
     async def on_app_command_completion(self, interaction: discord.Interaction, command: apc.Command) -> None:
+        """Called when an application command runs successfully."""
+
         _log.info(
             """Command %s completed.
-User: %s (ID: %d)
-Channel: %s (ID: %d)""",
+User %s (ID: %d)
+Channel %s (ID: %d)""",
             command.name,
             interaction.user,
             interaction.user.id,
@@ -45,15 +54,37 @@ Channel: %s (ID: %d)""",
             interaction.channel.id,
         )
 
-    async def on_app_command_error(self, interaction: discord.Interaction, error: apc.AppCommandError) -> None:
-        _log.error(error)
 
-        embed = discord.Embed(color=0xE24C4B, description=error)
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
+        """Called when a command raises an uncaught exception."""
+
+        _log.error(error)
+        traceback.print_exc()
+
+        message = str(error.__cause__ or error)
+        embed = discord.Embed(color=0xE24C4B, description=f"{EMOJIS.error} {message}")
+
+        message = await ctx.reply(embed=embed, ephemeral=True)
+        await asyncio.sleep(5)
+        await message.delete()
+        
+
+    async def on_app_command_error(self, interaction: discord.Interaction, error: apc.AppCommandError) -> None:
+        """Called when an application command raises an uncaught exception."""
+
+        _log.error(error)
+        traceback.print_exc()
+
+        message = str(error.__cause__ or error)
+        embed = discord.Embed(color=0xE24C4B, description=f"{EMOJIS.error} {message}")
 
         if interaction.response.is_done():
             await interaction.followup.send(embed=embed, ephemeral=True)
         else:
             await interaction.response.send_message(embed=embed, ephemeral=True)
+            await asyncio.sleep(5)
+            await interaction.delete_original_message()
 
 
 async def setup(bot: Bot):
