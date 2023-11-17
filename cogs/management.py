@@ -35,7 +35,7 @@ class Management(commands.Cog):
             if invite.inviter == member:
                 total_invites += invite.uses
 
-        await interaction.response.send_message(f"{start_text} **{total_invites}** invites.", ephemeral=True)
+        await interaction.response.send_message(f"{start_text} **{total_invites}** invites in {interaction.guild}.", ephemeral=True)
     
     @invite.command()
     @apc.guild_only()
