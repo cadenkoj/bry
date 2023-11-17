@@ -69,6 +69,16 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context, user: discord.User, reason: Optional[str] = "No reason given"):
+        """Unban a member from the server.
+
+        Parameters
+        ----------
+        user : discord.User
+            The user to unban.
+        reason : Optional[str]
+            The reason for the unban.
+        """
+
         try:
             await ctx.guild.fetch_ban(user)
         except discord.NotFound:
@@ -89,6 +99,16 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx: commands.Context, member: discord.Member, reason: Optional[str] = "No reason given"):
+        """Kick a member from the server.
+
+        Parameters
+        ----------
+        member : discord.Member
+            The member to kick.
+        reason : Optional[str]
+            The reason for the kick.
+        """
+
         if member == ctx.author:
             raise commands.BadArgument("You can't kick yourself.")
         if member == ctx.guild.owner or ctx.author.top_role <= member.top_role:
@@ -121,6 +141,16 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(moderate_members=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, duration: str, reason: Optional[str] = "No reason given"):
+        """Mute a member in the server.
+        
+        Parameters
+        ----------
+        member : discord.Member
+            The member to mute.
+        duration : str
+            The duration of the mute.
+        """
+
         mute_duration = parse_human_duration(duration)
         max_duration = timedelta(days=28)
 
@@ -162,6 +192,16 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(moderate_members=True)
     async def unmute(self, ctx: commands.Context, member: discord.Member, reason: Optional[str] = "No reason given"):
+        """Unmute a member in the server.
+        
+        Parameters
+        ----------
+        member : discord.Member
+            The member to unmute.
+        reason : Optional[str]
+            The reason for the unmute.
+        """
+
         if member == ctx.author:
             raise commands.BadArgument("You can't unmute yourself.")
         if member == ctx.guild.owner or ctx.author.top_role <= member.top_role:
@@ -196,6 +236,14 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx: commands.Context, amount: int):
+        """Purge a number of messages from the channel.
+        
+        Parameters
+        ----------
+        amount : int
+            The number of messages to purge.
+        """
+        
         await ctx.defer()
 
         if amount < 1:
