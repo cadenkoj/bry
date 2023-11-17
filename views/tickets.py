@@ -40,7 +40,7 @@ class DynamicDelete(
 
         is_staff = interaction.client.config.roles.staff in interaction.user.roles
         if not is_staff:
-            await interaction.followup.send("You do not have permission to use this command.")
+            await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)
             return
 
         embed = discord.Embed(color=0x599ae0)
@@ -154,7 +154,7 @@ class DynamicToggle(
 
         is_staff = interaction.client.config.roles.staff in interaction.user.roles
         if not is_staff:
-            await interaction.followup.send("You do not have permission to use this command.")
+            await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)
             return
 
         embed = discord.Embed(color=0x599ae0)
@@ -274,7 +274,7 @@ class CreationModal(discord.ui.Modal):
         open_ticket = ticket_collection.find_one(filter)
 
         if open_ticket:
-            await interaction.followup.send(f"You already have an open ticket at <#{open_ticket['channel_id']}>.")
+            await interaction.followup.send(f"You already have an open ticket at <#{open_ticket['channel_id']}>.", ephemeral=True)
             return
         
         embed = discord.Embed(color=0x599ae0)
