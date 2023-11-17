@@ -11,7 +11,7 @@ class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.hybrid_command()
+    @commands.hybrid_command(aliases=["av"])
     async def avatar(self, ctx: commands.Context, *, user: Optional[discord.User] = None):
         """Get the avatar of a user.
         
