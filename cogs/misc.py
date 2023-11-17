@@ -61,3 +61,6 @@ class Misc(commands.Cog):
         banner_embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
 
         await ctx.reply(embed=banner_embed , mention_author=False)
+
+async def setup(bot: Bot) -> None:
+    bot.add_cog(Misc(bot))
