@@ -1,24 +1,42 @@
+
 import asyncio
+import locale
 import logging
 import os
 import re
-import time
-import requests
+from datetime import datetime, timedelta
+from urllib.parse import urlparse
+import discord
+
 import gspread
+import requests
+from bs4 import BeautifulSoup
 from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime
-import locale
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+from constants import *
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 def fetch_roblox_id(username: str) -> int | None:
-    res = requests.get(f"https://users.roblox.com/v1/users/search?keyword={username}")
-
     try:
+        data = {
+            "usernames": [username],
+            "excludeBannedUsers": True,
+        }
+
+        res = requests.post(f"https://users.roblox.com/v1/usernames/users", data)
+        res.raise_for_status()
+
         data = res.json()
+
         if "data" in data:
             return data["data"][0]["id"]
-    except (KeyError, IndexError):
+    except:
         return None
     
 header_styles = {
@@ -42,6 +60,9 @@ row_styles = {
 }
 
 def write_to_ws(username: str, user_id: int, item: str, price: int) -> None:
+    if not IS_PROD:
+        return
+
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
     gc = gspread.authorize(credentials)
@@ -82,7 +103,77 @@ def write_to_ws(username: str, user_id: int, item: str, price: int) -> None:
 
     ws.update_cell(header_row, 7, locale.currency(total_cost, grouping=True))
 
+async def parse_cash_app_receipt(url: str) -> tuple[str, bool]:
+    parsed_url = urlparse(url)
 
+    if parsed_url.netloc != "cash.app":
+        return "Invalid URL. Please provide a valid Cash App web receipt.", False
+
+    try:
+        service = webdriver.ChromeService()
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+
+        driver = webdriver.Chrome(service=service, options=options)
+        driver.get(url)
+
+        header_info = EC.presence_of_element_located((By.XPATH, "//h4[contains(text(),'Payment to $ys2005')]"))
+        WebDriverWait(driver, 5).until(header_info)
+
+        amount_info = driver.find_element(By.XPATH, "//dt[contains(text(),'Amount')]")
+        source_info = driver.find_element(By.XPATH, "//dt[contains(text(),'Source')]")
+
+        if header_info and source_info.text == "Cash":
+            return amount_info.text, True
+
+    except TimeoutException:
+        return "Timed out reading Cash App web receipt.", False
+
+    finally:
+        driver.quit()
+
+def parse_human_duration(duration: str) -> timedelta:
+    components = {
+        "weeks": 0,
+        "days": 0,
+        "hours": 0,
+        "minutes": 0,
+        "seconds": 0,
+    }
+
+    for key in components:
+        match = re.search(rf"(\d+){key[0]}", duration)
+        if match:
+            components[key] = int(match.group(1))
+
+    current_time = datetime.now()
+    delta_time = timedelta(**components)
+
+    if current_time == current_time + delta_time:
+        raise ValueError("Invalid input format. Use the 'XhYm' format. e.g. '1h30m'")
+
+    return delta_time
+
+@dataclass
+class UserLog:
+    user: discord.User
+    moderator: discord.Member
+    reason: str
+
+@dataclass
+class MemberLog:
+    user: discord.Member
+    moderator: discord.Member
+    reason: str
+
+@dataclass
+class ActionCache:
+    kick: UserLog
+    unban: UserLog
+    ban: MemberLog
+    unmute: MemberLog
+    mute: MemberLog
+    
 class LogFormatter(logging.Formatter):
     LEVEL_COLOURS = [
         (logging.DEBUG, "\x1b[40;1m"),

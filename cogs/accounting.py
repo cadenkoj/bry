@@ -1,7 +1,8 @@
+import locale
 from typing import Optional
+from bson import ObjectId
 
 import discord
-from bson import ObjectId
 from discord import app_commands as apc
 from discord.ext import commands, tasks
 import pymongo
@@ -10,10 +11,9 @@ import locale
 
 from _types import Log, Stock
 from bot import Bot
-from utils import write_to_ws
-
-
-OWNER_IDS = [525189552986521613, 1092543812527738911, 997958244452544582]
+from utils import parse_cash_app_receipt, write_to_ws
+from constants import *
+from views.payment import PaymentButtons
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 price_fmt = lambda price: locale.currency(price, grouping=True)
@@ -36,8 +36,9 @@ class Accounting(commands.Cog):
         apc.Choice(name="ETH", value="eth_address"),
     ]
 
-    log = apc.Group(name="log", description="Manages a purchase log.")
-    item = apc.Group(name="item", description="Manages a stock item.")
+    cash = apc.Group(name="cash", description="Cash App")
+    item = apc.Group(name="item", description="Manages stock items.")
+    log = apc.Group(name="log", description="Manages purchase logs.")
 
     @log.command()
     @apc.guild_only()
@@ -50,176 +51,76 @@ class Accounting(commands.Cog):
         method: apc.Choice[str],
         info: str,
         item1: str,
-        item2: Optional[str],
-        item3: Optional[str],
-        item4: Optional[str],
-        item5: Optional[str],
-        discount: Optional[int] = 0,
+        discount: Optional[float] = 0.0,
+        item2: Optional[str] = None,
+        item3: Optional[str] = None,
+        item4: Optional[str] = None,
+        item5: Optional[str] = None,
     ) -> None:
         """Logs a sale and updates channel info.
 
         Parameters
         ___________
-        customer: discord.Member
+        customer : discord.Member
             The member who bought the item.
-        username: str
+        username : str
             The Roblox username of the user.
-        method: app_commands.Choice[str]
+        method : app_commands.Choice[str]
             The payment method used.
-        info: str
+        info : str
             The customer's payment info.
-        item1: str
+        item1 : str
             Item 1
-        discount: Optional[int]
-            The discount applied to the purchase, not per-item.
-        item2: Optional[str]
+        discount : Optional[float]
+            The discount applied to the full purchase.
+        item2 : Optional[str]
             Item 2
-        item3: Optional[str]
+        item3 : Optional[str]
             Item 3
-        item4: Optional[str]
+        item4 : Optional[str]
             Item 4
-        item5: Optional[str]
-            Item 5"""
+        item5 : Optional[str]
+            Item 5
+        """
 
-        is_support = interaction.user.get_role(1145965467207467049)
-        if not is_support:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
+        is_staff = self.bot.config.roles.staff in interaction.user.roles
+        if not is_staff:
+            raise Exception("You do not have permission to use this command.")
 
         await interaction.response.defer()
 
-        customer_role = interaction.guild.get_role(1145959140594810933)
-        log_channel = self.bot.get_channel(1151322058941267968)
-
-        log_collection: Collection[Log] = self.bot.database.get_collection("logs")
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in [item1, item2, item3, item4, item5] if item_id != None]
 
-        item_ids: list[str] = [item for item in [item1, item2, item3, item4, item5] if item is not None]
-        item_details: list[tuple[str, int]] = []
-
-        total_price = 0
-        invalid_items = 0
-        out_of_stock = 0
-
-        for item in item_ids:
-            try:
-                stock_item = stock_collection.find_one({"_id": ObjectId(item)})
-            except Exception:
-                invalid_items += 1
-                continue
-
-            if stock_item is None:
-                invalid_items += 1
-                continue
-
-            name = stock_item["name"]
-            price = stock_item["price"]
-            quantity = stock_item["quantity"]
-
-            if quantity < 1:
-                out_of_stock += 1
-                continue
-
-            total_price += price
-            item_details.append((name, price))
-
-            stock_collection.update_one(stock_item, {"$inc": {"quantity": -1}})
-
-            log = Log(user_id=customer.id, username=username, item=stock_item)
-            log[method.value] = info
-
-            log_collection.insert_one(log)
-
-        ws_reaction = '\N{WHITE HEAVY CHECK MARK}'
-        if item_details:
-            for name, price in item_details:
-                itemized_discount = discount / len(item_details)
-                total_price -= itemized_discount
-                
-                try:
-                    write_to_ws(username, customer.id, name, price - itemized_discount)
-                except Exception:
-                    ws_reaction = '\N{CROSS MARK}'
-
-        user_logs = log_collection.find({"user_id": customer.id})
-        log_count = log_collection.count_documents({"user_id": customer.id})
-        total_spent = sum([log["item"]["price"] for log in user_logs])
-
-        if total_spent >= 100:
-            valued_role = interaction.guild.get_role(1156319778810646579)
-            await customer.add_roles(valued_role)
-
-        if total_spent >= 250:
-            vip_role = interaction.guild.get_role(1145959139432992829)
-            await customer.add_roles(vip_role)
-
-        if total_spent >= 500:
-            high_value_role = interaction.guild.get_role(1156319772640817242)
-            await customer.add_roles(high_value_role)
-
-        if total_spent >= 1000:
-            notable_role = interaction.guild.get_role(1145959137453285416)
-            await customer.add_roles(notable_role)
+        purchase_log = await self.log_purchase(
+            customer=customer,
+            username=username,
+            method=method,
+            info=info,
+            items=items,
+            discount=discount
+        )
             
-        item_names = [name for name, _ in item_details]
-        discount_str = f" (-{price_fmt(discount)})" if discount > 0 else ""
-
-        log_embed = discord.Embed(
-            color=0x77ABFC,
-            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total_price)}** {discount_str}.",
+        embed = discord.Embed(
+            color=0x599ae0,
+            description=f"View the purchase log here: {purchase_log.jump_url}"
+        )
+        
+        embed.set_author(
+            name=f"Payment Completed",
+            icon_url=ICONS.ticket
         )
 
-        log_embed.set_author(name=f"{customer}", icon_url=f"{customer.display_avatar.url}")
-        log_embed.add_field(name=f"__Username__", value=username, inline=True)
-        log_embed.add_field(name=f"__{method.name}__", value=info, inline=True)
-        log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)
-        log_embed.set_footer(text=f"Transaction #{log_count}")
-
-        chat_embed = discord.Embed(
-            color=0x77ABFC,
-            description=f"""**__Info__**
-Items → {", ".join(item_names)}
-Total Price → {price_fmt(total_price)} {discount_str}
-Username → {username}
-Payment Method → {method.name}
-            """,
-        )
-
-        chat_embed.set_footer(text=info)
-
-        error_embed = discord.Embed(
-            color=0xE24C4B,
-            description="**__Failed__**",
-        )
-
-        if out_of_stock > 0:
-            error_embed.description += f"\n**{out_of_stock}** Out of Stock"
-            error_embed.set_footer(text=f"Use /fillstock to restock all items")
-        if invalid_items > 0:
-            error_embed.description += f"\n**{invalid_items}** Invalid Item{'s' if invalid_items > 1 else ''}"
-            error_embed.set_footer(text=f"Select items from the list")
-
-        embeds = []
-        if invalid_items or out_of_stock:
-            embeds.append(error_embed)
-        if item_details:
-            embeds.append(chat_embed)
-            await customer.add_roles(customer_role)
-
-            message = await log_channel.send(embed=log_embed)
-            await message.add_reaction(ws_reaction)
-
-        await interaction.followup.send(embeds=embeds)
+        await interaction.response.send_message(embed=embed)
 
     @apc.command()
     @apc.guild_only()
     async def stock(self, interaction: discord.Interaction) -> None:
         """Displays the curent available stock."""
 
-        is_support = interaction.user.get_role(1145965467207467049)
-        if not is_support:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
+        is_staff = self.bot.config.roles.staff in interaction.user.roles
+        if not is_staff:
+            raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
 
@@ -239,10 +140,13 @@ Payment Method → {method.name}
             set_name, _ = name.rsplit(" ", 1)
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
-            if quantity < 1:
-                continue
+            field.value += f"\n- {name} - ${price:,} "
 
-            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
+            if quantity >= 1:
+                field.value += f"`{quantity}x`"
+            else:
+                field.value += "`\N{CROSS MARK}`"
+            
             stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
 
         if not stock_embed.fields[-1].value:
@@ -257,23 +161,21 @@ Payment Method → {method.name}
 
         Parameters
         ___________
-        item: app_commands.Choice[str]
+        item : app_commands.Choice[str]
             The item that was restocked.
-        quantity: app_commands.Choice[str]
-            The amount that was restocked"""
+        quantity : app_commands.Choice[str]
+            The amount that was restocked
+        """
 
-        is_seller = interaction.user.get_role(1145959138602524672) is not None
-        is_exclusive = interaction.user.get_role(1146357576389378198) is not None
-        if not is_seller and not is_exclusive:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
+        is_staff = self.bot.config.roles.staff in interaction.user.roles
+        if not is_staff:
+            raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
         stock_item = stock_collection.find_one({"_id": ObjectId(item)})
 
         if stock_item is None:
-            await interaction.response.send_message("This item does not exist.", ephemeral=True)
-            return
+            raise commands.BadArgument("This item does not exist.")
 
         await interaction.response.defer()
 
@@ -285,7 +187,7 @@ Payment Method → {method.name}
 
         restock_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"Restocked **{name}** with **{quantity}x** → {combined_quantity} Total",
+            description=f"Restocked **{name}** by **{quantity}x** ({combined_quantity} Total)",
             timestamp=discord.utils.utcnow(),
         )
 
@@ -299,9 +201,9 @@ Payment Method → {method.name}
     async def clearstock(self, interaction: discord.Interaction) -> None:
         """Clears the stock list."""
 
-        if interaction.user.id not in OWNER_IDS:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
+        is_owner = interaction.user.id in self.bot.config.owner_ids
+        if not is_owner:
+            raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
         stock = stock_collection.find()
@@ -318,12 +220,13 @@ Payment Method → {method.name}
 
         Parameters
         ___________
-        amount: int
-            The amount to fill the stock with."""
+        amount : int
+            The amount to fill the stock with.
+        """
 
-        if interaction.user.id not in OWNER_IDS:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
+        is_owner = interaction.user.id in self.bot.config.owner_ids
+        if not is_owner:
+            raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
         stock = stock_collection.find()
@@ -340,36 +243,38 @@ Payment Method → {method.name}
 
         Parameters
         ___________
-        name: str
+        name : str
             The name of the new item.
-        price: int
+        price : int
             The price of the item.
-        quantity: int
-            The amount of the item in stock."""
+        quantity : int
+            The amount of the item in stock.
+        """
 
-        if interaction.user.id not in OWNER_IDS:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
+        is_owner = interaction.user.id in self.bot.config.owner_ids
+        if not is_owner:
+            raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
         stock_item = stock_collection.find_one({"name": name})
 
         if stock_item is not None:
-            await interaction.response.send_message("This item already exists.", ephemeral=True)
-            return
+            raise commands.BadArgument("This item already exists.")
 
         stock_item = Stock(name=name, price=price, quantity=quantity)
         stock_collection.insert_one(stock_item)
 
-        add_item_embed = discord.Embed(
+        item_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"Added **{quantity}x** **{name}** to the stock for **{price:,}**.",
+            title=f"Added {name}",
             timestamp=discord.utils.utcnow(),
         )
 
-        add_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
+        item_embed.add_field(name="Name", value=f"```{name}```", inline=True)
+        item_embed.add_field(name="Price", value=f"```${price:,}```", inline=True)
+        item_embed.add_field(name="In Stock", value=f"```{quantity}```", inline=True)
 
-        await interaction.response.send_message(embed=add_item_embed)
+        await interaction.response.send_message(embed=item_embed)
 
     @item.command()
     @apc.guild_only()
@@ -385,70 +290,66 @@ Payment Method → {method.name}
 
         Parameters
         ___________
-        item: str
+        item : str
             The name of the item to update.
-        name: Optional[str]
+        name : Optional[str]
             The new name of the item.
-        price: Optional[int]
+        price : Optional[int]
             The new price of the item.
-        quantity: Optional[int]
-            The new amount of the item."""
+        quantity : Optional[int]
+            The new amount of the item.
+        """
 
-        if interaction.user.id not in OWNER_IDS:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
+        is_owner = interaction.user.id in self.bot.config.owner_ids
+        if not is_owner:
+            raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
         stock_item = stock_collection.find_one({"_id": ObjectId(item)})
 
         if stock_item is None:
-            await interaction.response.send_message("This item does not exist.", ephemeral=True)
-            return
+            raise commands.BadArgument("This item does not exist.")
 
         if any([name, price, quantity]) is False:
-            await interaction.response.send_message("You must provide at least 1 field to update.", ephemeral=True)
-            return
+            raise commands.BadArgument("You must specify at least one attribute to update.")
+        
+        old_name = stock_item["name"]
+        old_price = stock_item["price"]
+        old_quantity = stock_item["quantity"]
+        
+        new_item = stock_item.copy()
 
-        updated_item = stock_item.copy()
-        description = f"**__Info__**"
-
-        if name is not None:
-            updated_item["name"] = name
-            description += f"\nName → {name}"
-
-        if price is not None:
-            old_price = updated_item["price"]
-
-            updated_item["price"] = price
-            description += f"\nPrice → ${price:,}"
-
-            if old_price != price:
-                channel = self.bot.get_channel(1166520967745511454)
-
-                price_diff = "📈" if price > old_price else "📉"
-                price_embed = discord.Embed(
-                    color=0x77ABFC,
-                    title=f"{price_diff} Price Updated",
-                    description=f"**{updated_item['name']}** has been updated from **${old_price:,}** to **${price:,}**.",
-                )
-
-                await channel.send(content="<@&1167290712220504064>", embed=price_embed)
-
-        if quantity is not None:
-            updated_item["quantity"] = quantity
-            description += f"\nQuantity → {quantity}"
-
-        stock_collection.update_one(stock_item, {"$set": updated_item})
-
-        update_item_embed = discord.Embed(
+        item_embed = discord.Embed(
             color=0x77ABFC,
-            description=description,
+            title=f"Updated {old_name}",
             timestamp=discord.utils.utcnow(),
         )
 
-        update_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
+        item_embed.add_field(name="Name", value=f"```{name or old_name}```", inline=True)
+        item_embed.add_field(name="Price", value=f"```${price or old_price:,}```", inline=True)
+        item_embed.add_field(name="In Stock", value=f"```{quantity or old_quantity}```", inline=True)
 
-        await interaction.response.send_message(embed=update_item_embed)
+        if price is not None:
+            new_item["price"] = price
+
+            if old_price != price:
+                updates_channel = self.bot.config.channels.updates
+
+                price_icon = "📈" if price > old_price else "📉"
+                price_embed = discord.Embed(
+                    color=0x77ABFC,
+                    title=f"{price_icon} Price Updated",
+                    description=f"**{new_item['name']}** has been updated from **${old_price:,}** to **${price:,}**.",
+                )
+
+                await updates_channel.send(content="<@&1167290712220504064>", embed=price_embed)
+
+        if quantity is not None:
+            new_item["quantity"] = quantity
+
+        stock_collection.update_one(stock_item, {"$set": new_item})
+
+        await interaction.response.send_message(embed=item_embed)
 
     @item.command()
     @apc.guild_only()
@@ -457,19 +358,19 @@ Payment Method → {method.name}
 
         Parameters
         ___________
-        item: str
-            The name of the item to remove."""
+        item : str
+            The name of the item to remove.
+        """
 
-        if interaction.user.id not in OWNER_IDS:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
+        is_owner = interaction.user.id in self.bot.config.owner_ids
+        if not is_owner:
+            raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
         stock_item = stock_collection.find_one({"_id": ObjectId(item)})
 
         if stock_item is None:
-            await interaction.response.send_message("This item does not exist.", ephemeral=True)
-            return
+            raise commands.BadArgument("This item does not exist.")
 
         name = stock_item["name"]
         price = stock_item["price"]
@@ -487,15 +388,214 @@ Payment Method → {method.name}
 
         await interaction.response.send_message(embed=remove_item_embed)
 
+    @cash.command()
+    @apc.guild_only()
+    async def app(
+        self,
+        interaction: discord.Interaction,
+        item1: str,
+        discount: Optional[float] = 0.0,
+        item2: Optional[str] = None,
+        item3: Optional[str] = None,
+        item4: Optional[str] = None,
+        item5: Optional[str] = None,
+    ) -> None:
+        """Sends the Cash App payment panel.
+        
+        Parameters
+        ___________
+        item1 : str
+            Item 1
+        discount : Optional[float]
+            The discount applied to the full purchase.
+        item2 : Optional[str]
+            Item 2
+        item3 : Optional[str]
+            Item 3
+        item4 : Optional[str]
+            Item 4
+        item5 : Optional[str]
+            Item 5
+        """
+
+        await interaction.response.defer()
+
+        is_staff = self.bot.config.roles.staff in interaction.user.roles
+        if not is_staff:
+            raise Exception("You do not have permission to use this command.")
+
+        embed = discord.Embed(
+            color=0x00c853,
+            title="Cash App",
+            description="<:BS_CashApp:1146371930228801566> Make sure to send with **Cash Balance** and **include the note** in your payment. After you're done, click the button below.",
+        )
+
+        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in [item1, item2, item3, item4, item5] if item_id != None]
+        
+        total = self.calc_total(items, discount)
+        amount_due = locale.currency(total, grouping=True)
+
+        embed.add_field(name='Cashtag', value='```$ehxpulse```', inline=True)
+        embed.add_field(name='Amount', value=f'```{amount_due}```', inline=True)
+        embed.add_field(name='Note', value=f'```gift```', inline=True)
+        embed.set_thumbnail(url='https://cash.app/qr/$ehxpulse')
+        embed.set_image(url="https://cdn.discordapp.com/attachments/1150184910640918629/1174187738765992038/pay-image.png")
+
+        view = PaymentButtons()
+        
+        await interaction.response.send_message(embed=embed, view=view)
+        message = await interaction.original_response()
+        
+        await view.wait()
+
+        customer = view.modal.interaction.user
+        username = view.modal.username.value
+        web_receipt = view.modal.web_receipt.value
+
+        info, success = await parse_cash_app_receipt(web_receipt)
+
+        await view.modal.interaction.delete_original_response()
+
+        if success is False:
+            raise Exception(info)
+        
+        received = float(info.replace('$', ''))
+
+        if received < total:
+            raise Exception(f"You did not pay the full amount. You paid **{info}** but the total is **{amount_due}**.")
+        
+        purchase_log = await self.log_purchase(
+            customer=customer,
+            username=username,
+            method=apc.Choice(name="Cash App", value="cashapp_receipt"),
+            info=web_receipt,
+            items=items,
+            discount=discount
+        )
+
+        embed = discord.Embed(
+            color=0x599ae0,
+            description=f"View the purchase log here: {purchase_log.jump_url}"
+        )
+        
+        embed.set_author(
+            name=f"Payment Received",
+            icon_url=ICONS.ticket
+        )
+
+        await message.reply(embed=embed)
+
+    def calc_total(self, items: list[Stock], discount: Optional[float] = 0.0) -> float:
+        """Calculates the total price of a purchase."""
+
+        total_price = -abs(discount)
+
+        for item in items:
+            price = item["price"]
+            quantity = item["quantity"]
+
+            if quantity >= 1:
+                total_price += price
+
+        return total_price
+
+    async def log_purchase(
+        self,
+        customer: discord.Member,
+        username: str,
+        method: apc.Choice[str],
+        info: str,
+        items: list[Stock],
+        discount: Optional[float] = 0.0
+    ) -> tuple[float, discord.Message]:
+        """Logs a purchase and updates channel info."""
+
+        log_collection: Collection[Log] = self.bot.database.get_collection("logs")
+        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        log_channel = self.bot.config.channels.purchases
+    
+        total = self.calc_total(items, discount)
+
+        item_names: list[str] = []
+        for item in items:
+            name = item["name"]
+            price = item["price"]
+
+            stock_collection.update_one(item, {"$inc": {"quantity": -1}})
+
+            log = Log(user_id=customer.id, username=username, item=item)
+            log[method.value] = info
+
+            item_names.append(name)
+            log_collection.insert_one(log)
+
+            itemized_discount = discount / len(items)
+            total -= itemized_discount
+            
+            try:
+                write_to_ws(username, customer.id, name, price - itemized_discount)
+                reaction = '\N{WHITE HEAVY CHECK MARK}'
+            except Exception:
+                reaction = '\N{CROSS MARK}'
+
+        log_count = log_collection.count_documents({"user_id": customer.id})
+        user_logs = log_collection.find({"user_id": customer.id})
+        total_spent = sum([log["item"]["price"] for log in user_logs])
+
+        discount_tag = f" (-{price_fmt(discount)})" if discount > 0 else ""
+
+        log_embed = discord.Embed(
+            color=0x77ABFC,
+            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total)}**{discount_tag}.",
+        )
+
+        if method.value == "cashapp_receipt":
+            info = f"[Web Receipt]({info})"
+
+        log_embed.set_author(name=f"{customer}", icon_url=f"{customer.display_avatar.url}")
+        log_embed.add_field(name=f"__Username__", value=username, inline=True)
+        log_embed.add_field(name=f"__{method.name}__", value=info, inline=True)
+        log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total)}", inline=True)
+        log_embed.set_footer(text=f"Transaction #{log_count}")
+
+        if total_spent >= 1500:
+            role = self.bot.config.roles.tier5
+        if total_spent >= 1000:
+            role = self.bot.config.roles.tier4
+        if total_spent >= 500:
+            role = self.bot.config.roles.tier3
+        if total_spent >= 250:
+            role = self.bot.config.roles.tier2
+        if total_spent >= 100:
+            role = self.bot.config.roles.tier1
+        if role:
+            await customer.add_roles(role)
+
+        message = await log_channel.send(embed=log_embed)
+        await message.add_reaction(reaction)
+        return message
+        
+    # Cash App
+    @app.autocomplete("item1")
+    @app.autocomplete("item2")
+    @app.autocomplete("item3")
+    @app.autocomplete("item4")
+    @app.autocomplete("item5")
+    # Logs
     @create.autocomplete("item1")
     @create.autocomplete("item2")
     @create.autocomplete("item3")
     @create.autocomplete("item4")
     @create.autocomplete("item5")
+    # Stock
     @restock.autocomplete("item")
+    # Updates
     @update.autocomplete("item")
     @delete.autocomplete("item")
     async def stock_autocompletion(self, interaction: discord.Interaction, current: str) -> list[apc.Choice[str]]:
+        """Autocompletes stock items."""
+
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
 
         data = []
@@ -517,8 +617,10 @@ Payment Method → {method.name}
 
     @tasks.loop(minutes=10)
     async def update_channels(self) -> None:
-        earned_channel = self.bot.get_channel(1146378858451435540)
-        sales_channel = self.bot.get_channel(1146378711088775219)
+        """Updates the sales and earnings channels."""
+
+        sales_channel = self.bot.config.channels.sales
+        earnings_channel = self.bot.config.channels.earnings
 
         log_collection: Collection[Log] = self.bot.database.get_collection("logs")
         logs = log_collection.find()
@@ -526,15 +628,17 @@ Payment Method → {method.name}
         # Don't touch!
         starting_sales = 99
 
-        combined_earnings = sum([log["item"]["price"] for log in logs])
         combined_sales = starting_sales + log_collection.count_documents({})
+        combined_earnings = sum([log["item"]["price"] for log in logs])
 
-        await earned_channel.edit(name=f"Earned: ${combined_earnings:,}")
         await sales_channel.edit(name=f"Sales: {combined_sales:,}")
+        await earnings_channel.edit(name=f"Earned: ${combined_earnings:,}")
 
     @tasks.loop(minutes=10)
     async def update_stock_embed(self) -> None:
-        stock_channel = self.bot.get_channel(1151344325893046293)
+        """Updates the stock embed."""
+
+        stock_channel = self.bot.config.channels.shop
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
 
@@ -556,10 +660,13 @@ Payment Method → {method.name}
             set_name, _ = name.rsplit(" ", 1)
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
-            if quantity < 1:
-                continue
+            field.value += f"\n- {name} - ${price:,} "
 
-            field.value += f"\n- **{name}** (${price:,}) — **{quantity}x**"
+            if quantity >= 1:
+                field.value += f"`{quantity}x`"
+            else:
+                field.value += "`\N{CROSS MARK}`"
+        
             stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
 
         if not stock_embed.fields[-1].value:
@@ -581,6 +688,7 @@ Payment Method → {method.name}
     @update_channels.before_loop
     @update_stock_embed.before_loop
     async def before_update(self) -> None:
+        """Waits for the bot to be ready."""
         await self.bot.wait_until_ready()
 
 
