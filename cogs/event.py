@@ -83,8 +83,6 @@ Channel %s (ID: %d)""",
             await interaction.followup.send(embed=embed, ephemeral=True)
         else:
             await interaction.response.send_message(embed=embed, ephemeral=True)
-            await asyncio.sleep(5)
-            await interaction.delete_original_message()
 
 
 async def setup(bot: Bot):
