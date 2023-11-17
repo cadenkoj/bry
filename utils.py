@@ -112,13 +112,14 @@ async def parse_cash_app_receipt(url: str) -> tuple[str, bool]:
 
     if parsed_url.netloc != "cash.app":
         return "Invalid URL. Please provide a valid Cash App web receipt.", False
+    
+    service = webdriver.ChromeService()
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+
+    driver = webdriver.Chrome(service=service, options=options)
 
     try:
-        service = webdriver.ChromeService()
-        options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
-
-        driver = webdriver.Chrome(service=service, options=options)
         driver.get(url)
 
         header_info = EC.presence_of_element_located((By.XPATH, "//h4[contains(text(),'Payment to $ys2005')]"))
