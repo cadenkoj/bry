@@ -113,12 +113,12 @@ class Accounting(commands.Cog):
 
         await interaction.followup.send(embed=embed)
 
-    @apc.command()
-    @apc.guild_only()
-    async def stock(self, interaction: discord.Interaction) -> None:
+    @commands.hybrid()
+    @commands.guild_only()
+    async def stock(self, ctx: commands.Context) -> None:
         """Displays the curent available stock."""
 
-        is_staff = self.bot.config.roles.staff in interaction.user.roles
+        is_staff = self.bot.config.roles.staff in ctx.author.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
 
@@ -152,7 +152,7 @@ class Accounting(commands.Cog):
         if not stock_embed.fields[-1].value:
             stock_embed.remove_field(-1)
 
-        await interaction.response.send_message(embed=stock_embed)
+        await ctx.send(embed=stock_embed)
 
     @apc.command()
     @apc.guild_only()
@@ -559,18 +559,23 @@ class Accounting(commands.Cog):
         log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total)}", inline=True)
         log_embed.set_footer(text=f"Transaction #{log_count}")
 
-        if total_spent >= 1500:
-            role = self.bot.config.roles.tier5
-        if total_spent >= 1000:
-            role = self.bot.config.roles.tier4
-        if total_spent >= 500:
-            role = self.bot.config.roles.tier3
-        if total_spent >= 250:
-            role = self.bot.config.roles.tier2
+        customer_role = self.bot.config.roles.customer
+        await customer.add_roles(customer_role)
+
+        tier_role = None
         if total_spent >= 100:
-            role = self.bot.config.roles.tier1
-        if role:
-            await customer.add_roles(role)
+            tier_role = self.bot.config.roles.tier1
+        if total_spent >= 250:
+            tier_role = self.bot.config.roles.tier2
+        if total_spent >= 500:
+            tier_role = self.bot.config.roles.tier3
+        if total_spent >= 1000:
+            tier_role = self.bot.config.roles.tier4
+        if total_spent >= 1500:
+            tier_role = self.bot.config.roles.tier5
+
+        if tier_role:
+            await customer.add_roles(tier_role, reason=f"Spent ${total_spent:,}")
 
         message = await log_channel.send(embed=log_embed)
         await message.add_reaction(reaction)

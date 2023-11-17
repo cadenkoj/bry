@@ -291,6 +291,9 @@ class CreationModal(discord.ui.Modal):
             await view.wait()
             payment_method = view.payment_method
 
+            if payment_method == None:
+                return
+
         ticket_id = str(ticket_count).rjust(4, "0")
         
         name = f'ticket-{interaction.user.name[:5]}-{ticket_id}'
@@ -320,7 +323,7 @@ Support will be with you shortly.
         )
 
         if self.category == "Purchase":
-            embed.description += f"\n**Payment Method** → {payment_method}"
+            embed.description += f"**Payment Method** → {payment_method}"
 
         embed.set_thumbnail(
             url=interaction.user.display_avatar.url

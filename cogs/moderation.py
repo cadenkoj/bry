@@ -1,4 +1,6 @@
+import asyncio
 from datetime import datetime, timedelta
+import math
 from typing import Optional
 import discord
 from discord import app_commands as apc
@@ -208,7 +210,9 @@ class Moderation(commands.Cog):
             description=f"{EMOJIS.check} **{amount}** messages have been purged.",
         )
 
-        await ctx.channel.send(embed=purge_chat_embed)
+        message = await ctx.channel.send(embed=purge_chat_embed)
+        await asyncio.sleep(3)
+        await message.delete()
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, member: discord.Member):
@@ -522,11 +526,10 @@ class Moderation(commands.Cog):
             color=0x99b4e1,
             title="Thanks for Boosting!",
             description=f"**{member}**, thank you for boosting! To reward you for your kindness, we're offering you some special perks!\n\n- Weekly DH Cash Drops\n- $5 off on orders < $100 and $10 off on orders > $100",
-            timestamp=discord.utils.utcnow(),
         )
 
         embed.set_thumbnail(url=member.display_avatar.url)
-        embed.set_footer(text="Rewards will last until your Boost expires", icon_url=member.display_avatar.url)
+        embed.set_footer(text="Rewards will last until your Boost expires", icon_url=message.guild.icon)
 
         channel = self.bot.config.channels.boosts
 
