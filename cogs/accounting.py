@@ -118,6 +118,8 @@ class Accounting(commands.Cog):
     async def stock(self, interaction: discord.Interaction) -> None:
         """Displays the curent available stock."""
 
+        await interaction.response.defer();
+
         is_staff = self.bot.config.roles.staff in interaction.user.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
@@ -152,7 +154,7 @@ class Accounting(commands.Cog):
         if not stock_embed.fields[-1].value:
             stock_embed.remove_field(-1)
 
-        await interaction.response.send_message(embed=stock_embed)
+        await interaction.followup.send(embed=stock_embed)
 
     @apc.command()
     @apc.guild_only()
@@ -167,6 +169,8 @@ class Accounting(commands.Cog):
             The amount that was restocked
         """
 
+        await interaction.response.defer()
+
         is_staff = self.bot.config.roles.staff in interaction.user.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
@@ -176,8 +180,6 @@ class Accounting(commands.Cog):
 
         if stock_item is None:
             raise commands.BadArgument("This item does not exist.")
-
-        await interaction.response.defer()
 
         name = stock_item["name"]
         price = stock_item["price"]
@@ -201,6 +203,8 @@ class Accounting(commands.Cog):
     async def clearstock(self, interaction: discord.Interaction) -> None:
         """Clears the stock list."""
 
+        await interaction.response.defer()
+
         is_owner = interaction.user.id in self.bot.config.owner_ids
         if not is_owner:
             raise Exception("You do not have permission to use this command.")
@@ -211,7 +215,7 @@ class Accounting(commands.Cog):
         for stock_item in stock:
             stock_collection.update_one(stock_item, {"$set": {"quantity": 0}})
 
-        await interaction.response.send_message("Cleared the stock.", ephemeral=True)
+        await interaction.followup.send("Cleared the stock.", ephemeral=True)
 
     @apc.command()
     @apc.guild_only()
@@ -224,6 +228,8 @@ class Accounting(commands.Cog):
             The amount to fill the stock with.
         """
 
+        await interaction.response.defer()
+
         is_owner = interaction.user.id in self.bot.config.owner_ids
         if not is_owner:
             raise Exception("You do not have permission to use this command.")
@@ -234,7 +240,7 @@ class Accounting(commands.Cog):
         for stock_item in stock:
             stock_collection.update_one(stock_item, {"$set": {"quantity": amount}})
 
-        await interaction.response.send_message(f"Filled the stock with **{amount}x** per item.", ephemeral=True)
+        await interaction.followup.send(f"Filled the stock with **{amount}x** per item.", ephemeral=True)
 
     @item.command()
     @apc.guild_only()
@@ -250,6 +256,8 @@ class Accounting(commands.Cog):
         quantity : int
             The amount of the item in stock.
         """
+
+        await interaction.response.defer()
 
         is_owner = interaction.user.id in self.bot.config.owner_ids
         if not is_owner:
@@ -274,7 +282,7 @@ class Accounting(commands.Cog):
         item_embed.add_field(name="Price", value=f"```${price:,}```", inline=True)
         item_embed.add_field(name="In Stock", value=f"```{quantity}```", inline=True)
 
-        await interaction.response.send_message(embed=item_embed)
+        await interaction.followup.send(embed=item_embed)
 
     @item.command()
     @apc.guild_only()
@@ -299,6 +307,8 @@ class Accounting(commands.Cog):
         quantity : Optional[int]
             The new amount of the item.
         """
+
+        await interaction.response.defer()
 
         is_owner = interaction.user.id in self.bot.config.owner_ids
         if not is_owner:
@@ -349,7 +359,7 @@ class Accounting(commands.Cog):
 
         stock_collection.update_one(stock_item, {"$set": new_item})
 
-        await interaction.response.send_message(embed=item_embed)
+        await interaction.followup.send(embed=item_embed)
 
     @item.command()
     @apc.guild_only()
@@ -361,6 +371,8 @@ class Accounting(commands.Cog):
         item : str
             The name of the item to remove.
         """
+
+        await interaction.response.defer()
 
         is_owner = interaction.user.id in self.bot.config.owner_ids
         if not is_owner:
@@ -386,7 +398,7 @@ class Accounting(commands.Cog):
         remove_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
         remove_item_embed.set_footer(text=f"${price:,}")
 
-        await interaction.response.send_message(embed=remove_item_embed)
+        await interaction.followup.send(embed=remove_item_embed)
 
     @cash.command()
     @apc.guild_only()
@@ -444,7 +456,7 @@ class Accounting(commands.Cog):
 
         view = PaymentButtons()
         
-        await interaction.response.send_message(embed=embed, view=view)
+        await interaction.followup.send(embed=embed, view=view)
         message = await interaction.original_response()
         
         await view.wait()
