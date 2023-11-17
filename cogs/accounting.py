@@ -118,13 +118,9 @@ class Accounting(commands.Cog):
     async def stock(self, ctx: commands.Context) -> None:
         """Displays the curent available stock."""
 
-<<<<<<< HEAD
-        is_staff = self.bot.config.roles.staff in ctx.author.roles
-=======
-        await interaction.response.defer();
+        await ctx.defer();
 
-        is_staff = self.bot.config.roles.staff in interaction.user.roles
->>>>>>> fe75ad4c9e2156a833f2d122621555be793f956d
+        is_staff = self.bot.config.roles.staff in ctx.author.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
 
@@ -158,11 +154,7 @@ class Accounting(commands.Cog):
         if not stock_embed.fields[-1].value:
             stock_embed.remove_field(-1)
 
-<<<<<<< HEAD
         await ctx.send(embed=stock_embed)
-=======
-        await interaction.followup.send(embed=stock_embed)
->>>>>>> fe75ad4c9e2156a833f2d122621555be793f956d
 
     @apc.command()
     @apc.guild_only()
