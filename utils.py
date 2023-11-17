@@ -16,7 +16,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 from constants import *
 
@@ -137,6 +137,9 @@ async def parse_cash_app_receipt(url: str) -> tuple[str, bool]:
             return "Invalid source. Please wait for refund and send with Cash Balance.", False
 
         return amount, True
+    
+    except NoSuchElementException:
+        return "Invalid Cash App transaction.", False
 
     except TimeoutException:
         return "Timed out reading Cash App web receipt.", False
