@@ -530,7 +530,7 @@ class Moderation(commands.Cog):
 
         channel = self.bot.config.channels.boosts
 
-        await channel.send(embed=embed)
+        await channel.send(embed=embed, content=message.author.mention)
 
 
 async def setup(bot: Bot):
