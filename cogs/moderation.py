@@ -20,7 +20,7 @@ class Moderation(commands.Cog):
     @commands.hybrid_command()
     @commands.guild_only()
     @commands.has_permissions(ban_members=True)
-    async def ban(self, ctx: commands.Context, member: discord.Member, reason: Optional[str] = "No reason given"):
+    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: Optional[str] = "No reason given"):
         """Ban a member from the server.
         
         Parameters
@@ -68,7 +68,7 @@ class Moderation(commands.Cog):
     @commands.hybrid_command()
     @commands.guild_only()
     @commands.has_permissions(ban_members=True)
-    async def unban(self, ctx: commands.Context, user: discord.User, reason: Optional[str] = "No reason given"):
+    async def unban(self, ctx: commands.Context, user: discord.User, *, reason: Optional[str] = "No reason given"):
         """Unban a member from the server.
 
         Parameters
@@ -98,7 +98,7 @@ class Moderation(commands.Cog):
     @commands.hybrid_command()
     @commands.guild_only()
     @commands.has_permissions(kick_members=True)
-    async def kick(self, ctx: commands.Context, member: discord.Member, reason: Optional[str] = "No reason given"):
+    async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: Optional[str] = "No reason given"):
         """Kick a member from the server.
 
         Parameters
@@ -140,7 +140,7 @@ class Moderation(commands.Cog):
     @commands.hybrid_command()
     @commands.guild_only()
     @commands.has_permissions(moderate_members=True)
-    async def mute(self, ctx: commands.Context, member: discord.Member, duration: str, reason: Optional[str] = "No reason given"):
+    async def mute(self, ctx: commands.Context, member: discord.Member, duration: str, *, reason: Optional[str] = "No reason given"):
         """Mute a member in the server.
         
         Parameters
@@ -191,7 +191,7 @@ class Moderation(commands.Cog):
     @commands.hybrid_command()
     @commands.guild_only()
     @commands.has_permissions(moderate_members=True)
-    async def unmute(self, ctx: commands.Context, member: discord.Member, reason: Optional[str] = "No reason given"):
+    async def unmute(self, ctx: commands.Context, member: discord.Member, *, reason: Optional[str] = "No reason given"):
         """Unmute a member in the server.
         
         Parameters
