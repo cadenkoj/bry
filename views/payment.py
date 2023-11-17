@@ -31,10 +31,10 @@ class CashAppModal(ui.Modal, title="Cash App"):
     username = ui.TextInput(label="Roblox Username", placeholder="John_Doe")
     web_receipt = ui.TextInput(label="Web Receipt", placeholder="https://cash.app/payments/xxx/receipt")
 
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: discord.Interaction[Bot]):
         self.interaction = interaction
 
-        log_collection: Collection[Log] = self.bot.database.get_collection("logs")
+        log_collection: Collection[Log] = interaction.client.database.get_collection("logs")
 
         if log_collection.find_one({"web_receipt": self.web_receipt.value}):
             raise ValueError("This receipt has already been submitted.")

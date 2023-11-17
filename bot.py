@@ -1,7 +1,5 @@
-from dataclasses import dataclass
 import logging
 import os
-from typing import Any
 
 import discord
 from discord.ext import commands

@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 
 from bot import Bot
-from config import get_config
 from utils import setup_logging
 
 load_dotenv()
