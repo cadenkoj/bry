@@ -83,11 +83,11 @@ class Accounting(commands.Cog):
             Item 5
         """
 
+        await interaction.response.defer()
+
         is_staff = self.bot.config.roles.staff in interaction.user.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
-
-        await interaction.response.defer()
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
         items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in [item1, item2, item3, item4, item5] if item_id != None]
@@ -111,7 +111,7 @@ class Accounting(commands.Cog):
             icon_url=ICONS.ticket
         )
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
     @apc.command()
     @apc.guild_only()
