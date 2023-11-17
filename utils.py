@@ -10,7 +10,6 @@ import discord
 
 import gspread
 import requests
-from bs4 import BeautifulSoup
 from oauth2client.service_account import ServiceAccountCredentials
 from selenium import webdriver
 from selenium.webdriver.common.by import By
