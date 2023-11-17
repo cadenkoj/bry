@@ -235,7 +235,7 @@ class Moderation(commands.Cog):
     @commands.hybrid_command()
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def purge(self, ctx: commands.Context, amount: int):
+    async def purge(self, ctx: commands.Context, amount: int, user: Optional[discord.User] = None):
         """Purge a number of messages from the channel.
         
         Parameters
@@ -250,12 +250,26 @@ class Moderation(commands.Cog):
             raise commands.BadArgument("Amount must be greater than 0.")
         if amount > 100:
             raise commands.BadArgument("Amount must be less than 100.")
+        
+        purged_messages: list[discord.Message] = []
+        if user:
+            is_author = lambda m: m.author.id == user.id
+            is_recent = lambda m: discord.utils.utcnow() - m.created_at < timedelta(weeks=2)
 
-        await ctx.channel.purge(limit=amount + 1)
+            async for message in ctx.channel.history(limit=1000):
+                if is_author(message) and is_recent(message):
+                    purged_messages.append(message)
+
+                if len(purged_messages) >= amount:
+                    break
+
+            await ctx.channel.delete_messages(purged_messages)
+        else:
+            purged_messages = await ctx.channel.purge(limit=amount + 1)
 
         purge_chat_embed = discord.Embed(
             color=0x99b4e1,
-            description=f"{EMOJIS.check} **{amount}** messages have been purged.",
+            description=f"{EMOJIS.check} **{len(purged_messages)}** messages have been purged.",
         )
 
         message = await ctx.channel.send(embed=purge_chat_embed)

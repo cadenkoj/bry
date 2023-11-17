@@ -63,4 +63,4 @@ class Misc(commands.Cog):
         await ctx.reply(embed=banner_embed , mention_author=False)
 
 async def setup(bot: Bot) -> None:
-    bot.add_cog(Misc(bot))
+    await bot.add_cog(Misc(bot))
