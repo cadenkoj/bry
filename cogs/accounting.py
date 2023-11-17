@@ -542,13 +542,11 @@ class Accounting(commands.Cog):
             item_names.append(name)
             log_collection.insert_one(log)
 
-            itemized_discount = discount / len(items)
-            total -= itemized_discount
-            
             try:
+                itemized_discount = discount / len(items)
                 write_to_ws(username, customer.id, name, price - itemized_discount)
                 reaction = '\N{WHITE HEAVY CHECK MARK}'
-            except Exception:
+            except:
                 reaction = '\N{CROSS MARK}'
 
         log_count = log_collection.count_documents({"user_id": customer.id})

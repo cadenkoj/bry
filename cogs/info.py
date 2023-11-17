@@ -11,10 +11,14 @@ class Info(commands.Cog):
 
     @commands.hybrid_command()
     async def pn(self, ctx: commands.Context):
+        """Send the payment note."""
+        
         await ctx.send(f"This is for digital goods. I have already received what I paid for. I will not chargeback under any circumstance. I am fully aware that making any attempt to chargeback this payment is considered fraud and against the seller's policy.")
 
     @commands.hybrid_command()
     async def ps(self, ctx: commands.Context):
+        """Send the private server."""
+
         is_staff = self.bot.config.roles.staff in ctx.author.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
@@ -23,18 +27,26 @@ class Info(commands.Cog):
 
     @commands.hybrid_command()
     async def ltc(self, ctx: commands.Context):
+        """Send the LTC address."""
+
         await ctx.send("```LTX2cZ9DoFR2gErZdCaaLA1ovFzdNsfTmH```")
 
     @commands.hybrid_command()
     async def btc(self, ctx: commands.Context):
+        """Send the BTC address."""
+
         await ctx.send("```bc1qcza9p80drr8wzvdpn0vzegpsglmkvgsmmukuxe```")
 
     @commands.hybrid_command()
     async def eth(self, ctx: commands.Context):
+        """Send the ETH address."""
+
         await ctx.send("```0x7462F240169b7411fDC83C607e5C13fbcBC7E988```")
 
     @commands.hybrid_command()
     async def paypal(self, ctx: commands.Context, amount: int):
+        """Send the PayPal info."""
+
         is_staff = self.bot.config.roles.staff in ctx.author.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
