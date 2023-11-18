@@ -107,10 +107,13 @@ def write_to_ws(username: str, user_id: int, item: str, price: int) -> None:
 
     ws.update_cell(header_row, 7, locale.currency(total_cost, grouping=True))
 
-service = webdriver.ChromeService()
-options = webdriver.ChromeOptions()
-options.add_argument('--headless')
-driver = webdriver.Chrome(service=service, options=options)
+chrome_service = webdriver.ChromeService()
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
+
+driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
 async def parse_cash_app_receipt(url: str) -> tuple[str, bool]:
     parsed_url = urlparse(url)
