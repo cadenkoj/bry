@@ -35,7 +35,6 @@ class Accounting(commands.Cog):
         apc.Choice(name="ETH", value="eth_address"),
     ]
 
-    cash = apc.Group(name="cash", description="Cash App")
     item = apc.Group(name="item", description="Manages stock items.")
     log = apc.Group(name="log", description="Manages purchase logs.")
 
