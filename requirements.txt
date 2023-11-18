@@ -1,3 +1,4 @@
+async-timeout==4.0.3
 discord.py @ git+https://github.com/Rapptz/discord.py@933460c3d46ed6a4af3dbad5701e95de2354628d
 gspread==5.12.0
 humanize==4.8.0
