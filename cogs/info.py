@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 
 from bot import Bot
+from views.payment import ConfirmationView
 
 class Info(commands.Cog):
     """Commands for getting information."""
@@ -65,10 +66,35 @@ class Info(commands.Cog):
 """
         )
 
-        view = discord.ui.View()
-
         paypal_button = discord.ui.Button(style=discord.ButtonStyle.link, label="PayPal", url=f"https://www.paypal.com/paypalme/hadialidani")
-        view.add_item(paypal_button)
+        view = ConfirmationView(paypal_button)
+
+        await ctx.send(embed=embed, view=view)
+
+    @commands.hybrid_command()
+    async def cashapp(self, ctx: commands.Context, amount: int):
+        """Send the Cash App info."""
+
+        is_staff = self.bot.config.roles.staff in ctx.author.roles
+        if not is_staff:
+            raise Exception("You do not have permission to use this command.")
+    
+        embed = discord.Embed(
+            color=0x00c853,
+            title="Cash App",
+            description=f"""
+1. Send a screenshot of your Cash App balance, then wait for us to confirm.
+
+2. Once we confirm, send $1 to the Cash App below. After the payment is accepted, send the remaining ${amount - 1:,}.
+
+3. After you accept the request, send the transaction's web receipt link.
+"""
+        )
+
+        embed.set_image(url="https://cdn.discordapp.com/attachments/1150184910640918629/1175260629939003452/pay_image.png")
+
+        cashapp_button = discord.ui.Button(style=discord.ButtonStyle.link, label="Cash App", url=f"https://cash.app/$ehxpulse")
+        view = ConfirmationView(cashapp_button)
 
         await ctx.send(embed=embed, view=view)
 

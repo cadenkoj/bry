@@ -1,22 +1,15 @@
 
-import asyncio
 import json
 import locale
 import logging
 import os
 import re
 from datetime import datetime, timedelta
-from urllib.parse import urlparse
 import discord
 
 import gspread
 import requests
 from oauth2client.service_account import ServiceAccountCredentials
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 from constants import *
 
@@ -106,46 +99,6 @@ def write_to_ws(username: str, user_id: int, item: str, price: int) -> None:
             total_cost += float(re.sub(r'[\$,]', '', row[5]))
 
     ws.update_cell(header_row, 7, locale.currency(total_cost, grouping=True))
-
-chrome_service = webdriver.ChromeService()
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--disable-dev-shm-usage')
-
-driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-
-async def parse_cash_app_receipt(url: str) -> tuple[str, bool]:
-    parsed_url = urlparse(url)
-
-    if parsed_url.netloc != "cash.app":
-        return "Invalid URL. Please provide a valid Cash App web receipt.", False
-    
-    try:
-        driver.get(url)
-
-        header_info = EC.presence_of_element_located((By.XPATH, "//h4[contains(text(),'Payment to $ehxpulse')]"))
-        WebDriverWait(driver, 5).until(header_info)
-
-        note = driver.find_element(By.XPATH, "//p[contains(text(),'For')]").text
-        info = driver.find_elements(By.TAG_NAME, "dd")
-
-        amount = info[0].text
-        source = info[1].text
-
-        if note != "For gift":
-            return "Invalid note. Please wait for refund and send with the note \"gift\".", False
-        
-        if source != "Cash":
-            return "Invalid source. Please wait for refund and send with Cash Balance.", False
-
-        return amount, True
-    
-    except NoSuchElementException:
-        return "Invalid Cash App transaction.", False
-
-    except TimeoutException:
-        return "Timed out reading Cash App web receipt.", False
 
 def parse_human_duration(duration: str) -> timedelta:
     components = {
@@ -247,3 +200,43 @@ def setup_logging() -> None:
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
+
+# chrome_service = webdriver.ChromeService()
+# chrome_options = webdriver.ChromeOptions()
+# chrome_options.add_argument('--headless')
+# chrome_options.add_argument('--no-sandbox')
+# chrome_options.add_argument('--disable-dev-shm-usage')
+
+# driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+
+# async def parse_cash_app_receipt(url: str) -> tuple[str, bool]:
+#     parsed_url = urlparse(url)
+
+#     if parsed_url.netloc != "cash.app":
+#         return "Invalid URL. Please provide a valid Cash App web receipt.", False
+    
+#     try:
+#         driver.get(url)
+
+#         header_info = EC.presence_of_element_located((By.XPATH, "//h4[contains(text(),'Payment to $ehxpulse')]"))
+#         WebDriverWait(driver, 5).until(header_info)
+
+#         note = driver.find_element(By.XPATH, "//p[contains(text(),'For')]").text
+#         info = driver.find_elements(By.TAG_NAME, "dd")
+
+#         amount = info[0].text
+#         source = info[1].text
+
+#         if note != "For gift":
+#             return "Invalid note. Please wait for refund and send with the note \"gift\".", False
+        
+#         if source != "Cash":
+#             return "Invalid source. Please wait for refund and send with Cash Balance.", False
+
+#         return amount, True
+    
+#     except NoSuchElementException:
+#         return "Invalid Cash App transaction.", False
+
+#     except TimeoutException:
+#         return "Timed out reading Cash App web receipt.", False
