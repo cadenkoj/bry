@@ -11,7 +11,6 @@ from pymongo.collection import Collection
 from _types import Ticket
 from bot import Bot
 from constants import *
-from views.payment import CashAppModal
 
 class DynamicDelete(
     discord.ui.DynamicItem[discord.ui.Button],
@@ -317,13 +316,13 @@ class CreationModal(discord.ui.Modal):
             description=f"""
 Welcome, {interaction.user.mention}!
 Support will be with you shortly. 
-
-**Reason** → {self.input.value}
 """,
         )
 
         if self.category == "Purchase":
-            embed.description += f"**Payment Method** → {payment_method}"
+            embed.description += f"\n**Item(s)** → {self.input.value} ({payment_method})"
+        if self.category == "Support":
+            embed.description += f"\n**Reason** → {self.input.value}"
 
         embed.set_thumbnail(
             url=interaction.user.display_avatar.url

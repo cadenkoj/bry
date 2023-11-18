@@ -11,9 +11,8 @@ import locale
 
 from _types import Log, Stock
 from bot import Bot
-from utils import parse_cash_app_receipt, write_to_ws
+from utils import write_to_ws
 from constants import *
-from views.payment import PaymentButtons
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 price_fmt = lambda price: locale.currency(price, grouping=True)
@@ -400,104 +399,6 @@ class Accounting(commands.Cog):
 
         await interaction.followup.send(embed=remove_item_embed)
 
-    @cash.command()
-    @apc.guild_only()
-    async def app(
-        self,
-        interaction: discord.Interaction,
-        item1: str,
-        discount: Optional[float] = 0.0,
-        item2: Optional[str] = None,
-        item3: Optional[str] = None,
-        item4: Optional[str] = None,
-        item5: Optional[str] = None,
-    ) -> None:
-        """Sends the Cash App payment panel.
-        
-        Parameters
-        ___________
-        item1 : str
-            Item 1
-        discount : Optional[float]
-            The discount applied to the full purchase.
-        item2 : Optional[str]
-            Item 2
-        item3 : Optional[str]
-            Item 3
-        item4 : Optional[str]
-            Item 4
-        item5 : Optional[str]
-            Item 5
-        """
-
-        await interaction.response.defer()
-
-        is_staff = self.bot.config.roles.staff in interaction.user.roles
-        if not is_staff:
-            raise Exception("You do not have permission to use this command.")
-
-        embed = discord.Embed(
-            color=0x00c853,
-            title="Cash App",
-            description="<:BS_CashApp:1146371930228801566> Make sure to send with **Cash Balance** and **include the note** in your payment. After you're done, click the button below.",
-        )
-
-        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-        items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in [item1, item2, item3, item4, item5] if item_id != None]
-        
-        total = self.calc_total(items, discount)
-        amount_due = locale.currency(total, grouping=True)
-
-        embed.add_field(name='Cashtag', value='```$ehxpulse```', inline=True)
-        embed.add_field(name='Amount', value=f'```{amount_due}```', inline=True)
-        embed.add_field(name='Note', value=f'```gift```', inline=True)
-        embed.set_thumbnail(url='https://cash.app/qr/$ehxpulse')
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1150184910640918629/1174187738765992038/pay-image.png")
-
-        view = PaymentButtons()
-        
-        await interaction.followup.send(embed=embed, view=view)
-        message = await interaction.original_response()
-        
-        await view.wait()
-
-        customer = view.modal.interaction.user
-        username = view.modal.username.value
-        web_receipt = view.modal.web_receipt.value
-
-        info, success = await parse_cash_app_receipt(web_receipt)
-
-        await view.modal.interaction.delete_original_response()
-
-        if success is False:
-            raise Exception(info)
-        
-        received = float(info.replace('$', ''))
-
-        if received < total:
-            raise Exception(f"You did not pay the full amount. You paid **{info}** but the total is **{amount_due}**.")
-        
-        purchase_log = await self.log_purchase(
-            customer=customer,
-            username=username,
-            method=apc.Choice(name="Cash App", value="cashapp_receipt"),
-            info=web_receipt,
-            items=items,
-            discount=discount
-        )
-
-        embed = discord.Embed(
-            color=0x599ae0,
-            description=f"View the purchase log here: {purchase_log.jump_url}"
-        )
-        
-        embed.set_author(
-            name=f"Payment Received",
-            icon_url=ICONS.ticket
-        )
-
-        await message.reply(embed=embed)
-
     def calc_total(self, items: list[Stock], discount: Optional[float] = 0.0) -> float:
         """Calculates the total price of a purchase."""
 
@@ -591,12 +492,6 @@ class Accounting(commands.Cog):
         await message.add_reaction(reaction)
         return message
         
-    # Cash App
-    @app.autocomplete("item1")
-    @app.autocomplete("item2")
-    @app.autocomplete("item3")
-    @app.autocomplete("item4")
-    @app.autocomplete("item5")
     # Logs
     @create.autocomplete("item1")
     @create.autocomplete("item2")
