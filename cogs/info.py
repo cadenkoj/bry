@@ -24,7 +24,7 @@ class Info(commands.Cog):
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
 
-        await ctx.send("https://www.roblox.com/games/2788229376/1M-CODEs-Da-Hood?privateServerLinkCode=83706208461702631056500770002026")
+        await ctx.send("https://www.roblox.com/games/2788229376/1M-CODEs-Da-Hood?privateServerLinkCode=08505190204121690811488497040441")
 
     @commands.hybrid_command()
     async def ltc(self, ctx: commands.Context):
@@ -85,9 +85,9 @@ class Info(commands.Cog):
             description=f"""
 1. Send a screenshot of your Cash App balance, then wait for us to confirm.
 
-2. Once we confirm, send $1 to the Cash App below. After the payment is accepted, send the remaining ${amount - 1:,}.
+2. Once we confirm, send $1 to the Cash App below. Once <@525189552986521613> accepts the payment, send ${amount - 1:,} with the note "gift".
 
-3. After you accept the request, send the transaction's web receipt link.
+3. After you've sent it, send the transaction's web receipt link.
 """
         )
 
