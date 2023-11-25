@@ -404,11 +404,7 @@ class Accounting(commands.Cog):
         total_price = -abs(discount)
 
         for item in items:
-            price = item["price"]
-            quantity = item["quantity"]
-
-            if quantity >= 1:
-                total_price += price
+            total_price += item["price"]
 
         return total_price
 
