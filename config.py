@@ -5,6 +5,7 @@ from discord import Role, TextChannel, VoiceChannel
 from bot import Bot
 from constants import *
 
+
 @dataclass
 class ChannelConfig:
     sales: VoiceChannel
@@ -16,6 +17,7 @@ class ChannelConfig:
     updates: TextChannel
     boosts: TextChannel
 
+
 @dataclass
 class RolesConfig:
     staff: Role
@@ -26,11 +28,13 @@ class RolesConfig:
     tier4: Role
     tier5: Role
 
+
 @dataclass
 class BotConfig:
-    owner_ids = [1174402623965769881, 525189552986521613, 997958244452544582]
+    owner_ids = [1174402623965769881, 230897007001075712, 997958244452544582]
     channels: ChannelConfig
     roles: RolesConfig
+
 
 def get_config(bot: Bot):
     if IS_PROD:
@@ -55,7 +59,7 @@ def get_config(bot: Bot):
                 tier3=guild.get_role(1156319772640817242),
                 tier4=guild.get_role(1145959137453285416),
                 tier5=guild.get_role(1156320181895827537),
-            )
+            ),
         )
     else:
         guild = bot.get_guild(1123001792775590053)
@@ -79,5 +83,5 @@ def get_config(bot: Bot):
                 tier3=guild.get_role(1174443765100982373),
                 tier4=guild.get_role(1174443786118627360),
                 tier5=guild.get_role(1174443799443931316),
-            )
+            ),
         )
