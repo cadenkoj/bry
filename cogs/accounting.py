@@ -453,7 +453,7 @@ class Accounting(commands.Cog):
 
         log_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total)}**{discount_tag}.",
+            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total_spent)}**{discount_tag}.",
         )
 
         if method.value == "cashapp_receipt":
