@@ -453,7 +453,7 @@ class Accounting(commands.Cog):
 
         log_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total_spent)}**{discount_tag}.",
+            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total)}**{discount_tag}.",
         )
 
         if method.value == "cashapp_receipt":
@@ -462,7 +462,7 @@ class Accounting(commands.Cog):
         log_embed.set_author(name=f"{customer}", icon_url=f"{customer.display_avatar.url}")
         log_embed.add_field(name=f"__Username__", value=username, inline=True)
         log_embed.add_field(name=f"__{method.name}__", value=info, inline=True)
-        log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total)}", inline=True)
+        log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)
         log_embed.set_footer(text=f"Transaction #{log_count}")
 
         customer_role = self.bot.config.roles.customer
