@@ -12,11 +12,11 @@ class Info(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command()
-    async def pn(self, ctx: commands.Context):
+    async def gs(self, ctx: commands.Context):
         """Send the payment note."""
 
         await ctx.send(
-            f"This is for digital goods. I have already received what I paid for. I will not chargeback under any circumstance. I am fully aware that making any attempt to chargeback this payment is considered fraud and against the seller's policy."
+            f"1. Join the private server listed.\n\n2.Go to bank.\n\n3.Have your trade menu open and ready."
         )
 
     @commands.hybrid_command()
@@ -97,7 +97,7 @@ class Info(commands.Cog):
 
 2. Once we confirm, send $1 to the Cash App below. Once <@230897007001075712> accepts the payment, send ${amount - 1:,} with the note "gift".
 
-3. After you've sent it, send the transaction's web receipt link. Transactions > ${amount} > Web receipt > Copy link.
+3. After you've sent it, send the transaction's web receipt link. **Transactions > ${amount - 1:,} > Web receipt > Copy link.**
 """,
         )
 
