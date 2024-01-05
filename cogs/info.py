@@ -28,26 +28,26 @@ class Info(commands.Cog):
             raise Exception("You do not have permission to use this command.")
 
         await ctx.send(
-            "https://www.roblox.com/games/2788229376/1M-CODEs-Da-Hood?privateServerLinkCode=08505190204121690811488497040441"
+            "<https://www.roblox.com/games/2788229376/1M-CODEs-Da-Hood?privateServerLinkCode=08505190204121690811488497040441>"
         )
 
     @commands.hybrid_command()
     async def ltc(self, ctx: commands.Context):
         """Send the LTC address."""
 
-        await ctx.send("```LTX2cZ9DoFR2gErZdCaaLA1ovFzdNsfTmH```")
+        await ctx.send("LTX2cZ9DoFR2gErZdCaaLA1ovFzdNsfTmH")
 
     @commands.hybrid_command()
     async def btc(self, ctx: commands.Context):
         """Send the BTC address."""
 
-        await ctx.send("```bc1qcza9p80drr8wzvdpn0vzegpsglmkvgsmmukuxe```")
+        await ctx.send("bc1qcza9p80drr8wzvdpn0vzegpsglmkvgsmmukuxe")
 
     @commands.hybrid_command()
     async def eth(self, ctx: commands.Context):
         """Send the ETH address."""
 
-        await ctx.send("```0x7462F240169b7411fDC83C607e5C13fbcBC7E988```")
+        await ctx.send("0x7462F240169b7411fDC83C607e5C13fbcBC7E988")
 
     @commands.hybrid_command()
     async def paypal(self, ctx: commands.Context, amount: int):
@@ -70,6 +70,7 @@ class Info(commands.Cog):
 4. Once we confirm, ping us and send your email so we can find your payment.
 """,
         )
+        embed.set_footer(text="If you understand, click the button below.")
 
         paypal_button = discord.ui.Button(
             style=discord.ButtonStyle.link,
@@ -96,14 +97,14 @@ class Info(commands.Cog):
 
 2. Once we confirm, send $1 to the Cash App below. Once <@230897007001075712> accepts the payment, send ${amount - 1:,} with the note "gift".
 
-3. After you've sent it, send the transaction's web receipt link.
+3. After you've sent it, send the transaction's web receipt link. Transactions > ${amount} > Web receipt > Copy link.
 """,
         )
 
         embed.set_image(
             url="https://cdn.discordapp.com/attachments/1150184910640918629/1175260629939003452/pay_image.png"
         )
-
+        embed.set_footer(text="If you understand, click the button below.")
         cashapp_button = discord.ui.Button(
             style=discord.ButtonStyle.link,
             label="Cash App",
