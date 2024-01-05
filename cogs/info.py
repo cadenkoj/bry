@@ -12,24 +12,21 @@ class Info(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command()
-    async def gs(self, ctx: commands.Context):
+    async def ps(self, ctx: commands.Context):
         """Send the payment note."""
 
-        await ctx.send(
-            f"1. Join the private server listed.\n\n2.Go to bank.\n\n3.Have your trade menu open and ready."
+        embed = discord.Embed(
+            color=0x77ABFC,
+            description="""
+1. Join the [private server here](https://www.roblox.com/games/2788229376/1M-CODEs-Da-Hood?privateServerLinkCode=08505190204121690811488497040441).
+
+2. Go to bank and open up your trade menu.
+
+3. Once the trade is complete, use the picture (if provided) sent by the seller for <#1141650778021441536>.
+""",
         )
 
-    @commands.hybrid_command()
-    async def ps(self, ctx: commands.Context):
-        """Send the private server."""
-
-        is_staff = self.bot.config.roles.staff in ctx.author.roles
-        if not is_staff:
-            raise Exception("You do not have permission to use this command.")
-
-        await ctx.send(
-            "<https://www.roblox.com/games/2788229376/1M-CODEs-Da-Hood?privateServerLinkCode=08505190204121690811488497040441>"
-        )
+        await ctx.send(embed=embed)
 
     @commands.hybrid_command()
     async def ltc(self, ctx: commands.Context):
@@ -65,12 +62,13 @@ class Info(commands.Cog):
 
 2. Make the note "gift", click next, and then select Friends & Family.
 
-3. Take a screenshot of the details before sending the payment and wait for us to confirm.
+3. Now go to your Transactions > {amount:,} > Print Details > Take and send a screenshot
 
-4. Once we confirm, ping us and send your email so we can find your payment.
+4. Once we confirm, ping us and send your PayPal email so we can find your payment.
+
+5. If you understand, click the button below.
 """,
         )
-        embed.set_footer(text="If you understand, click the button below.")
 
         paypal_button = discord.ui.Button(
             style=discord.ButtonStyle.link,
@@ -93,18 +91,19 @@ class Info(commands.Cog):
             color=0x00C853,
             title="Cash App",
             description=f"""
-1. Send a screenshot of your Cash App balance, then wait for us to confirm.
+1. Send a screenshot of your Cash App balance and ping us. Then wait for us to confirm.
 
-2. Once we confirm, send $1 to the Cash App below. Once <@230897007001075712> accepts the payment, send ${amount - 1:,} with the note "gift".
+2. Once we confirm, send $1 to the Cash App below. After <@230897007001075712> accepts the payment, send ${amount - 1:,} with the note "gift".
 
-3. After you've sent it, send the transaction's web receipt link. **Transactions > ${amount - 1:,} > Web receipt > Copy link.**
+3. Now send the web receipt link, Transactions > ${amount - 1:,} > Web receipt > Copy link.
+
+4. If you understand, click the button below.
 """,
         )
 
         embed.set_image(
             url="https://cdn.discordapp.com/attachments/1150184910640918629/1175260629939003452/pay_image.png"
         )
-        embed.set_footer(text="If you understand, click the button below.")
         cashapp_button = discord.ui.Button(
             style=discord.ButtonStyle.link,
             label="Cash App",
