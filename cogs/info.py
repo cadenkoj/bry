@@ -62,11 +62,13 @@ class Info(commands.Cog):
 
 2. Make the note "gift", click next, and then select Friends & Family.
 
-3. Now go to your Transactions > {amount:,} > Print Details > Take and send a screenshot
+3. Now go to your Transactions > ${amount:,} > Print Details > Take and send a screenshot
 
 4. Once we confirm, ping us and send your PayPal email so we can find your payment.
 
-5. If you understand, click the button below.
+5. Then send your Roblox name.
+
+6. If you understand, click the button below.
 """,
         )
 
@@ -97,7 +99,9 @@ class Info(commands.Cog):
 
 3. Now send the web receipt link, Transactions > ${amount - 1:,} > Web receipt > Copy link.
 
-4. If you understand, click the button below.
+4. Then send your Roblox name & Cash Tag.
+
+5. If you understand, click the button below.
 """,
         )
 
