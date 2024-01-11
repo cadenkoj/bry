@@ -64,7 +64,7 @@ class Info(commands.Cog):
         embed.add_field(name=f"__Transaction Count__", value=log_count, inline=True)
         embed.set_author(name=user, icon_url=user.display_avatar.url)
 
-        await ctx.sent(embed=embed)
+        await ctx.send(embed=embed)
 
     @commands.hybrid_command()
     async def ltc(self, ctx: commands.Context):
