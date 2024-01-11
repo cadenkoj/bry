@@ -1,8 +1,18 @@
+import locale
+
 import discord
 from discord.ext import commands
 
 from bot import Bot
 from views.payment import ConfirmationView
+from typing import Optional
+
+from pymongo.collection import Collection
+
+from _types import Log
+
+locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
+price_fmt = lambda price: locale.currency(price, grouping=True)
 
 
 class Info(commands.Cog):
@@ -27,6 +37,34 @@ class Info(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+
+    @commands.hybrid_command()
+    async def ts(self, ctx: commands.Context, *, user: Optional[discord.User] = None):
+        """Send the total amount spent for a user.
+
+        Parameters
+        ----------
+        user : Optional[discord.User]
+            The user to get the total spent of.
+        """
+
+        if user is None:
+            user = ctx.author._user
+
+        log_collection: Collection[Log] = self.bot.database.get_collection("logs")
+
+        log_count = log_collection.count_documents({"user_id": user.id})
+        user_logs = log_collection.find({"user_id": user.id})
+        total_spent = sum([log["item"]["price"] for log in user_logs])
+
+        embed = discord.Embed(
+            color=0x77ABFC,
+        )
+        embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)
+        embed.add_field(name=f"__Transaction Count__", value=log_count, inline=True)
+        embed.set_author(name=user, icon_url=user.display_avatar.url)
+
+        await ctx.sent(embed=embed)
 
     @commands.hybrid_command()
     async def ltc(self, ctx: commands.Context):
