@@ -137,7 +137,11 @@ class Accounting(commands.Cog):
             price = stock_item["price"]
             quantity = stock_item["quantity"]
 
-            set_name, _ = name.rsplit(" ", 1)
+            if " " in name:
+                set_name, _ = name.rsplit(" ", 1)
+            else:
+                set_name = "Miscellaneous"
+
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
             field.value += f"\n- {name} - ${price:,} "
@@ -562,7 +566,11 @@ class Accounting(commands.Cog):
             price = stock_item["price"]
             quantity = stock_item["quantity"]
 
-            set_name, _ = name.rsplit(" ", 1)
+            if " " in name:
+                set_name, _ = name.rsplit(" ", 1)
+            else:
+                set_name = "Miscellaneous"
+            
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
             field.value += f"\n- {name} - ${price:,} "
