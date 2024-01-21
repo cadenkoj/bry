@@ -28,7 +28,7 @@ class Info(commands.Cog):
         embed = discord.Embed(
             color=0x77ABFC,
             description="""
-1. Join the [private server here](https://www.roblox.com/games/2788229376/1M-CODEs-Da-Hood?privateServerLinkCode=08505190204121690811488497040441).
+1. Join the [private server here](https://www.roblox.com/games/2788229376/Da-Hood?privateServerLinkCode=32902013200534655990932210019492).
 
 2. Go to bank and open up your trade menu.
 
@@ -60,7 +60,9 @@ class Info(commands.Cog):
         embed = discord.Embed(
             color=0x77ABFC,
         )
-        embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)
+        embed.add_field(
+            name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True
+        )
         embed.add_field(name=f"__Transaction Count__", value=log_count, inline=True)
         embed.set_author(name=user, icon_url=user.display_avatar.url)
 
