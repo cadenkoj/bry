@@ -321,7 +321,7 @@ Support will be with you shortly.
 
         if self.category == "Purchase":
             embed.description += f"\n**Item(s)** → {self.input.value} ({payment_method})"
-        if self.category == "Support":
+        else:
             embed.description += f"\n**Reason** → {self.input.value}"
 
         embed.set_thumbnail(
@@ -362,6 +362,16 @@ class PanelView(discord.ui.View):
     async def support_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(label='Enter reason for your support')
         await interaction.response.send_modal(CreationModal('Support', info))
+
+    @discord.ui.button(emoji="<:vbucks:1200935914625581136>", label="V-Bucks", style=discord.ButtonStyle.primary, custom_id="support_ticket")
+    async def vbuck_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(label='Enter reason for your support')
+        await interaction.response.send_modal(CreationModal('V-Bucks', info))
+
+    @discord.ui.button(emoji="<:dahoodcash:1200935989363871837>", label="DHC", style=discord.ButtonStyle.primary, custom_id="support_ticket")
+    async def dhc_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(label='Enter reason for your support')
+        await interaction.response.send_modal(CreationModal('DHC', info))
 
 async def setup(bot: Bot):
     bot.add_view(PanelView())
