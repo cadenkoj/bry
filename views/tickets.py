@@ -368,11 +368,6 @@ class PanelView(discord.ui.View):
         info = discord.ui.TextInput(label='Enter reason for your support')
         await interaction.response.send_modal(CreationModal('V-Bucks', info))
 
-    @discord.ui.button(emoji="<:dahoodcash:1200935989363871837>", label="DHC", style=discord.ButtonStyle.primary, custom_id="dhc_ticket")
-    async def dhc_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        info = discord.ui.TextInput(label='Enter reason for your support')
-        await interaction.response.send_modal(CreationModal('Da Hood Cash', info))
-
 async def setup(bot: Bot):
     bot.add_view(PanelView())
     bot.add_dynamic_items(DynamicDelete, DynamicToggle)
