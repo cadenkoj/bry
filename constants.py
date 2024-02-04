@@ -19,7 +19,6 @@ class Emojis:
 
 
 IS_PROD = os.environ.get("ENV") == "prod"
-OWNER_IDS = [230897007001075712, 1174402623965769881, 997958244452544582]
 
 ICONS = Icons()
 EMOJIS = Emojis()

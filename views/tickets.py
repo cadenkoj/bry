@@ -51,7 +51,7 @@ class DynamicDelete(
 
         embed.set_footer(
             text=interaction.guild,
-            icon_url=interaction.guild.icon.url
+            icon_url=interaction.guild.icon
         )
 
         await interaction.channel.send(embed=embed)
@@ -94,7 +94,7 @@ class DynamicDelete(
 
         embed.set_footer(
             text=interaction.guild,
-            icon_url=interaction.guild.icon.url
+            icon_url=interaction.guild.icon
         )
 
         view = discord.ui.View()
@@ -165,7 +165,7 @@ class DynamicToggle(
 
         embed.set_footer(
             text=interaction.guild,
-            icon_url=interaction.guild.icon.url
+            icon_url=interaction.guild.icon
         )
 
         message = await interaction.channel.send(embed=embed)
@@ -198,7 +198,7 @@ class DynamicToggle(
 
         embed.set_footer(
             text=interaction.guild,
-            icon_url=interaction.guild.icon.url
+            icon_url=interaction.guild.icon
         )
 
         await message.edit(embed=embed)
@@ -335,7 +335,7 @@ Support will be with you shortly.
 
         embed.set_footer(
             text=interaction.guild,
-            icon_url=interaction.guild.icon.url
+            icon_url=interaction.guild.icon
         )
 
         view = ManageView(channel.id, self.category)
@@ -358,7 +358,7 @@ class PanelView(discord.ui.View):
 
         await interaction.response.send_modal(CreationModal('Purchase', info))
 
-    @discord.ui.button(emoji="\N{handshake}", label="Support", style=discord.ButtonStyle.primary, custom_id="support_ticket")
+    @discord.ui.button(emoji="\N{wrench}", label="Support", style=discord.ButtonStyle.primary, custom_id="support_ticket")
     async def support_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(label='Enter reason for your support')
         await interaction.response.send_modal(CreationModal('Support', info))
@@ -367,6 +367,11 @@ class PanelView(discord.ui.View):
     async def vbucks_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(label='Enter reason for your support')
         await interaction.response.send_modal(CreationModal('V-Bucks', info))
+
+    @discord.ui.button(emoji="\N{handshake}", label="Middleman", style=discord.ButtonStyle.primary, custom_id="mm_ticket")
+    async def vbucks_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(label='Enter reason for your support')
+        await interaction.response.send_modal(CreationModal('Middleman', info))
 
 async def setup(bot: Bot):
     bot.add_view(PanelView())

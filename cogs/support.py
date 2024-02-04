@@ -87,7 +87,7 @@ class Support(commands.Cog):
 
         embed.set_footer(
             text=interaction.guild,
-            icon_url=interaction.guild.icon.url
+            icon_url=interaction.guild.icon
         )
 
         await interaction.followup.send(embed=embed)
@@ -134,7 +134,7 @@ class Support(commands.Cog):
 
         embed.set_footer(
             text=interaction.guild,
-            icon_url=interaction.guild.icon.url
+            icon_url=interaction.guild.icon
         )
 
         await interaction.followup.send(embed=embed)
@@ -181,7 +181,7 @@ class Support(commands.Cog):
 
         embed.set_footer(
             text=interaction.guild,
-            icon_url=interaction.guild.icon.url
+            icon_url=interaction.guild.icon
         )
 
         await interaction.followup.send(embed=embed)
