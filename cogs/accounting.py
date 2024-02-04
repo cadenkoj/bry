@@ -195,7 +195,7 @@ class Accounting(commands.Cog):
             timestamp=discord.utils.utcnow(),
         )
 
-        restock_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
+        restock_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
         restock_embed.set_footer(text=f"${price:,}")
 
         await interaction.followup.send(embed=restock_embed)
@@ -397,7 +397,7 @@ class Accounting(commands.Cog):
             timestamp=discord.utils.utcnow(),
         )
 
-        remove_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
+        remove_item_embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar)
         remove_item_embed.set_footer(text=f"${price:,}")
 
         await interaction.followup.send(embed=remove_item_embed)
@@ -463,7 +463,7 @@ class Accounting(commands.Cog):
         if method.value == "cashapp_receipt":
             info = f"[Web Receipt]({info})"
 
-        log_embed.set_author(name=f"{customer}", icon_url=f"{customer.display_avatar.url}")
+        log_embed.set_author(name=f"{customer}", icon_url=customer.display_avatar.url)
         log_embed.add_field(name=f"__Username__", value=username, inline=True)
         log_embed.add_field(name=f"__{method.name}__", value=info, inline=True)
         log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)

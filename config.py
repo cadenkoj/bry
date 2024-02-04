@@ -31,7 +31,7 @@ class RolesConfig:
 
 @dataclass
 class BotConfig:
-    owner_ids = [1174402623965769881, 230897007001075712, 997958244452544582]
+    owner_ids = [1201776746555527198, 230897007001075712, 997958244452544582]
     channels: ChannelConfig
     roles: RolesConfig
 
@@ -62,26 +62,26 @@ def get_config(bot: Bot):
             ),
         )
     else:
-        guild = bot.get_guild(1123001792775590053)
+        guild = bot.get_guild(1203846918724395008)
 
         return BotConfig(
             channels=ChannelConfig(
-                sales=bot.get_channel(1174443203500445786),
-                earnings=bot.get_channel(1174443221498200075),
-                purchases=bot.get_channel(1174443476998430901),
-                logs=bot.get_channel(1174879358498918471),
-                modlogs=bot.get_channel(1174878230147248148),
-                shop=bot.get_channel(1174443381078900816),
-                updates=bot.get_channel(1174443394051874910),
-                boosts=bot.get_channel(1148450041732804648),
+                sales=bot.get_channel(1203847431477927936),
+                earnings=bot.get_channel(1203847446971809792),
+                purchases=bot.get_channel(1203847411437543474),
+                logs=bot.get_channel(1203847411437543474),
+                modlogs=bot.get_channel(1203847411437543474),
+                shop=bot.get_channel(1203847411437543474),
+                updates=bot.get_channel(1203847411437543474),
+                boosts=bot.get_channel(1203847411437543474),
             ),
             roles=RolesConfig(
-                staff=guild.get_role(1174443576550248599),
-                customer=guild.get_role(1174443664223764582),
-                tier1=guild.get_role(1174443686717825045),
-                tier2=guild.get_role(1174443747115794593),
-                tier3=guild.get_role(1174443765100982373),
-                tier4=guild.get_role(1174443786118627360),
-                tier5=guild.get_role(1174443799443931316),
+                staff=guild.get_role(1203847285633720350),
+                customer=guild.get_role(1203847285633720350),
+                tier1=guild.get_role(1203847285633720350),
+                tier2=guild.get_role(1203847285633720350),
+                tier3=guild.get_role(1203847285633720350),
+                tier4=guild.get_role(1203847285633720350),
+                tier5=guild.get_role(1203847285633720350),
             ),
         )
