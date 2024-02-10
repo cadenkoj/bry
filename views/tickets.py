@@ -369,7 +369,7 @@ class PanelView(discord.ui.View):
         await interaction.response.send_modal(CreationModal('V-Bucks', info))
 
     @discord.ui.button(emoji="\N{handshake}", label="Middleman", style=discord.ButtonStyle.primary, custom_id="mm_ticket")
-    async def vbucks_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def  mm_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(label='Enter reason for your support')
         await interaction.response.send_modal(CreationModal('Middleman', info))
 
