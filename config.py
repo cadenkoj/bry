@@ -31,7 +31,7 @@ class RolesConfig:
 
 @dataclass
 class BotConfig:
-    owner_ids = [1201776746555527198, 230897007001075712, 997958244452544582]
+    owner_ids = [1201776746555527198, 230897007001075712, 997958244452544582, 1070544585228570685]
     channels: ChannelConfig
     roles: RolesConfig
 
