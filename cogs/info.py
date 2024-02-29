@@ -93,7 +93,10 @@ class Info(commands.Cog):
         is_staff = self.bot.config.roles.staff in ctx.author.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
-
+        
+        await ctx.send(content="Temporarily Disabled!")
+        return
+        
         embed = discord.Embed(
             color=0x012169,
             title="PayPal",
@@ -128,6 +131,9 @@ class Info(commands.Cog):
         is_staff = self.bot.config.roles.staff in ctx.author.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
+        
+        await ctx.send(content="Temporarily Disabled!")
+        return
 
         embed = discord.Embed(
             color=0x00C853,
