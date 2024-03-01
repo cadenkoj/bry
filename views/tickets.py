@@ -66,7 +66,7 @@ class DynamicDelete(
         params = {"channel_id": interaction.channel_id, "category": self.category}
 
         if IS_PROD:
-            requests.get(f"http://api.railway.internal:8080/save", params)
+            requests.get(f"http://bot-api.railway.internal:8080/save", params)
 
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
         
@@ -100,8 +100,8 @@ class DynamicDelete(
         view = discord.ui.View()
 
         params = f"channel_id={interaction.channel_id}"
-        transcript_url = f"https://api-production-ce8c.up.railway.app/view?{params}"
-        download_url = f"https://api-production-ce8c.up.railway.app/download?{params}"
+        transcript_url = f"https://bryshop-api.up.railway.app/view?{params}"
+        download_url = f"https://bryshop-api.up.railway.app/download?{params}"
 
         view_transcript = discord.ui.Button(emoji="\N{PAGE FACING UP}", label="View Transcript", url=transcript_url, style=discord.ButtonStyle.link)
         download_transcript = discord.ui.Button(emoji="\N{LINK SYMBOL}", label="Download Transcript", url=download_url, style=discord.ButtonStyle.link)
@@ -369,7 +369,7 @@ class PanelView(discord.ui.View):
         await interaction.response.send_modal(CreationModal('V-Bucks', info))
 
     @discord.ui.button(emoji="\N{handshake}", label="Middleman", style=discord.ButtonStyle.primary, custom_id="mm_ticket")
-    async def  mm_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def vbucks_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(label='Enter reason for your support')
         await interaction.response.send_modal(CreationModal('Middleman', info))
 
