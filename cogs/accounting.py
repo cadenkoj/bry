@@ -573,12 +573,12 @@ class Accounting(commands.Cog):
             
             i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
 
-            field.value += f"\n- {name} – ${price:,} – "
+            field.value += f"\n- {name} (${price:,}) – "
 
             if quantity >= 1:
-                field.value += f"Stock: {quantity}"
+                field.value += f"`Stock: {quantity}`"
             else:
-                field.value += "(Out of Stock)"
+                field.value += "`(Out of Stock)`"
         
             stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
 

@@ -345,7 +345,30 @@ Support will be with you shortly.
 
         await message.pin()
 
-class PanelView(discord.ui.View):
+class PurchasePanel(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="\N{MONEY WITH WINGS}", label="Purchase", style=discord.ButtonStyle.primary, custom_id="purchase_ticket")
+    async def purchase_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(
+            label='Enter info for your purchase',
+            placeholder='e.g. RGB Karambit',
+        )
+
+        await interaction.response.send_modal(CreationModal('Purchase', info))
+
+    @discord.ui.button(emoji="\N{wrench}", label="Support", style=discord.ButtonStyle.primary, custom_id="support_ticket")
+    async def support_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(label='Enter reason for your support')
+        await interaction.response.send_modal(CreationModal('Support', info))
+
+    @discord.ui.button(emoji="\N{handshake}", label="Middleman", style=discord.ButtonStyle.primary, custom_id="mm_ticket")
+    async def vbucks_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(label='Enter reason for your support')
+        await interaction.response.send_modal(CreationModal('Middleman', info))
+
+class SupportPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 

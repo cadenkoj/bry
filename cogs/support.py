@@ -14,13 +14,47 @@ class Support(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    ticket = apc.Group(name="ticket", description="Manage a support ticket.")
+    ticket = apc.Group(name="ticket", description="Ticket commands")
+    purchase = apc.Group(name="purchase", description="Purchase commands")
+    support = apc.Group(name="support", description="Support commands")
 
-    @ticket.command()
+    @purchase.command()
     @apc.guild_only()
     @apc.default_permissions(manage_guild=True)
     async def panel(self, interaction: discord.Interaction) -> None:
-        """Sends the support panel."""
+        """Sends the ticket panel."""
+
+        await interaction.response.defer(ephemeral=True)
+
+        is_owner = interaction.user.id in self.bot.config.owner_ids
+        if not is_owner:
+            raise Exception("You do not have permission to use this command.")
+
+        embed = discord.Embed(
+            color=0x599ae0,
+            title="Payment Info",
+            description="""
+<:BS_CashApp:1146371930228801566> ▹ Cash App (Cash Balance)
+
+<:BS_PayPal:1146371958024441886> ▹ PayPal (Friends & Family)
+
+<:BS_Crypto:1146371947207335947> ▹ Crypto (LTC, BTC, ETH)
+
+<:BS_Sshf:1172691541366681681> ▹ Limited Items (150k+ Value)
+"""
+        )
+
+        embed.set_footer(text="Click a button below to create a ticket")
+
+        view = PanelView()
+        await interaction.channel.send(embed=embed, view=view)
+        await interaction.delete_original_response()
+
+    @support.command()
+    @apc.guild_only()
+    @apc.default_permissions(manage_guild=True)
+    async def panel(self, interaction: discord.Interaction) -> None:
+        """Sends the ticket panel."""
 
         await interaction.response.defer(ephemeral=True)
 
