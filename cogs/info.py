@@ -132,16 +132,13 @@ class Info(commands.Cog):
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
         
-        await ctx.send(content="Temporarily Disabled!")
-        return
-
         embed = discord.Embed(
             color=0x00C853,
             title="Cash App",
             description=f"""
 1. Send a screenshot of your Cash App balance and ping us. Then wait for us to confirm.
 
-2. Once we confirm, send $1 to the Cash App below. After <@230897007001075712> accepts the payment, send ${amount - 1:,}.
+2. Once we confirm, send $1 to the Cash App below. After <@1152002279378010152> accepts the payment, send ${amount - 1:,}.
 
 3. Now send the web receipt link, Transactions > ${amount - 1:,} > Web receipt > Copy link.
 
@@ -154,13 +151,14 @@ class Info(commands.Cog):
         embed.set_image(
             url="https://cdn.discordapp.com/attachments/1173382235420885053/1202402278120755291/image0.png?ex=65cd5362&is=65bade62&hm=219de6d215d509b1db182bb9a94465bd579dbcec56c0980a0828b4b0127b6bde&"
         )
+
         cashapp_button = discord.ui.Button(
             style=discord.ButtonStyle.link,
             label="Cash App",
-            url=f"https://cash.app/$umehxpulse",
+            url=f"https://cash.app/$nleft",
         )
-        view = ConfirmationView(cashapp_button)
 
+        view = ConfirmationView(cashapp_button)
         await ctx.send(embed=embed, view=view)
 
 
