@@ -349,7 +349,7 @@ class PurchasePanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="\N{MONEY WITH WINGS}", label="Purchase", style=discord.ButtonStyle.primary, custom_id="purchase_ticket")
+    @discord.ui.button(emoji="\N{money with wings}", label="Purchase", style=discord.ButtonStyle.primary, custom_id="purchase_ticket")
     async def purchase_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(
             label='Enter info for your purchase',
@@ -358,38 +358,19 @@ class PurchasePanel(discord.ui.View):
 
         await interaction.response.send_modal(CreationModal('Purchase', info))
 
-    @discord.ui.button(emoji="\N{wrench}", label="Support", style=discord.ButtonStyle.primary, custom_id="support_ticket")
-    async def support_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        info = discord.ui.TextInput(label='Enter reason for your support')
-        await interaction.response.send_modal(CreationModal('Support', info))
-
-    @discord.ui.button(emoji="\N{handshake}", label="Middleman", style=discord.ButtonStyle.primary, custom_id="mm_ticket")
-    async def vbucks_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        info = discord.ui.TextInput(label='Enter reason for your support')
-        await interaction.response.send_modal(CreationModal('Middleman', info))
+    @discord.ui.button(emoji="\N{hourglass}", label="Exclusive", style=discord.ButtonStyle.primary, custom_id="exclusive_ticket")
+    async def exclusive_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(label='Enter info for your purchase')
+        await interaction.response.send_modal(CreationModal('Exclusive', info))
 
 class SupportPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="\N{MONEY WITH WINGS}", label="Purchase", style=discord.ButtonStyle.primary, custom_id="purchase_ticket")
-    async def purchase_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        info = discord.ui.TextInput(
-            label='Enter info for your purchase',
-            placeholder='e.g. RGB Karambit',
-        )
-
-        await interaction.response.send_modal(CreationModal('Purchase', info))
-
     @discord.ui.button(emoji="\N{wrench}", label="Support", style=discord.ButtonStyle.primary, custom_id="support_ticket")
     async def support_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(label='Enter reason for your support')
         await interaction.response.send_modal(CreationModal('Support', info))
-
-    @discord.ui.button(emoji="<:vbucks:1200935914625581136>", label="V-Bucks", style=discord.ButtonStyle.primary, custom_id="vbucks_ticket")
-    async def vbucks_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        info = discord.ui.TextInput(label='Enter reason for your support')
-        await interaction.response.send_modal(CreationModal('V-Bucks', info))
 
     @discord.ui.button(emoji="\N{handshake}", label="Middleman", style=discord.ButtonStyle.primary, custom_id="mm_ticket")
     async def vbucks_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -397,5 +378,6 @@ class SupportPanel(discord.ui.View):
         await interaction.response.send_modal(CreationModal('Middleman', info))
 
 async def setup(bot: Bot):
-    bot.add_view(PanelView())
+    bot.add_view(PurchasePanel())
+    bot.add_view(SupportPanel())
     bot.add_dynamic_items(DynamicDelete, DynamicToggle)

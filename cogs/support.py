@@ -6,7 +6,7 @@ from pymongo.collection import Collection
 from _types import Ticket
 from bot import Bot
 from constants import *
-from views.tickets import PanelView
+from views.tickets import PanelView, PurchasePanel, SupportPanel
 
 class Support(commands.Cog):
     """Commands for handling support tickets."""
@@ -32,7 +32,7 @@ class Support(commands.Cog):
 
         embed = discord.Embed(
             color=0x599ae0,
-            title="Payment Info",
+            title="Make a Purchase",
             description="""
 <:BS_CashApp:1146371930228801566> ▹ Cash App (Cash Balance)
 
@@ -44,9 +44,9 @@ class Support(commands.Cog):
 """
         )
 
-        embed.set_footer(text="Click a button below to create a ticket")
+        embed.set_footer(text="Click the button below to create a ticket")
 
-        view = PanelView()
+        view = PurchasePanel()
         await interaction.channel.send(embed=embed, view=view)
         await interaction.delete_original_response()
 
@@ -64,21 +64,13 @@ class Support(commands.Cog):
 
         embed = discord.Embed(
             color=0x599ae0,
-            title="Payment Info",
-            description="""
-<:BS_CashApp:1146371930228801566> ▹ Cash App (Cash Balance)
-
-<:BS_PayPal:1146371958024441886> ▹ PayPal (Friends & Family)
-
-<:BS_Crypto:1146371947207335947> ▹ Crypto (LTC, BTC, ETH)
-
-<:BS_Sshf:1172691541366681681> ▹ Limited Items (150k+ Value)
-"""
+            title="Assistance",
+            description="Need help with something? Contact us here."
         )
 
         embed.set_footer(text="Click a button below to create a ticket")
 
-        view = PanelView()
+        view = SupportPanel()
         await interaction.channel.send(embed=embed, view=view)
         await interaction.delete_original_response()
 
