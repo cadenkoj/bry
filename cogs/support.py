@@ -6,7 +6,7 @@ from pymongo.collection import Collection
 from _types import Ticket
 from bot import Bot
 from constants import *
-from views.tickets import PanelView, PurchasePanel, SupportPanel
+from views.tickets import PurchasePanel, SupportPanel
 
 class Support(commands.Cog):
     """Commands for handling support tickets."""
