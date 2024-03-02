@@ -47,9 +47,9 @@ def get_config(bot: Bot):
                 purchases=bot.get_channel(1151322058941267968),
                 logs=bot.get_channel(1148454686945443851),
                 modlogs=bot.get_channel(1148446938157563914),
-                shop=bot.get_channel(1151344325893046293),
-                updates=bot.get_channel(1166520967745511454),
-                boosts=bot.get_channel(1148450041732804648),
+                shop=bot.get_channel(1213588818628968528),
+                updates=bot.get_channel(1213588854041215016),
+                boosts=bot.get_channel(1213583947154333756),
             ),
             roles=RolesConfig(
                 staff=guild.get_role(1146375334170730548),
