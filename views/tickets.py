@@ -586,8 +586,8 @@ class PurchaseDropdown(discord.ui.View):
             self.values.append(item)
 
         stock_collection: Collection[Stock] = interaction.client.database.get_collection("stock")
-        stock_names = {str(item["_id"]): f"{item.get("set", "")} {item["name"]}" for item in stock_collection.find()}
-        stock_prices = {str(item["_id"]): f"{item["price"]}" for item in stock_collection.find()}
+        stock_names = {str(item["_id"]): f"{item.get('set', '')} {item['name']}" for item in stock_collection.find()}
+        stock_prices = {str(item["_id"]): f"{item['price']}" for item in stock_collection.find()}
 
         self.items = [stock_names[id] for id in self.values]
         self.reason = "\n- " + "\n- ".join(self.items)

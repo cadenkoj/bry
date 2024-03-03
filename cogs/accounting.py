@@ -237,8 +237,7 @@ class Accounting(commands.Cog):
                 price_embed = discord.Embed(
                     color=0x77ABFC,
                     title=f"{price_icon} Price Updated",
-                    description=f"**{new_item['set']} {new_item['name']}** has been updated from **${
-                        old_price:,}** to **${price:,}**.",
+                    description=f"**{new_item['set']} {new_item['name']}** has been updated from **${old_price:,}** to **${price:,}**.",
                 )
 
                 await updates_channel.send(content="<@&1167290712220504064>", embed=price_embed)
