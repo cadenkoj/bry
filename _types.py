@@ -4,6 +4,7 @@ from bson import ObjectId
 
 
 class Item(TypedDict):
+    set: NotRequired[str]
     name: str
     price: int
 
@@ -14,18 +15,22 @@ class Log(TypedDict):
     username: str
     item: Item
     cashapp_tag: NotRequired[str]
-    cashapp_receipt: NotRequired[str]
     paypal_email: NotRequired[str]
     venmo_username: NotRequired[str]
     stripe_email: NotRequired[str]
-    btc_address: NotRequired[str]
-    ltc_address: NotRequired[str]
-    eth_address: NotRequired[str]
+    crypto_address: NotRequired[str]
 
 
 class Stock(Item):
     _id: NotRequired[ObjectId]
     quantity: int
+
+
+class TicketData(TypedDict):
+    payment_method: str
+    items: list[str]
+    subtotal: int
+    total: int
 
 
 class Ticket(TypedDict):
@@ -35,3 +40,4 @@ class Ticket(TypedDict):
     username: str
     category: str
     open: bool
+    data: NotRequired[TicketData]

@@ -1,16 +1,152 @@
 import asyncio
+from collections import defaultdict
+import locale
 import os
 import re
+from typing import Optional
+from bson import ObjectId
 import requests
 import humanize
 import asyncio
+from discord import app_commands as apc
 
 import discord
 from pymongo.collection import Collection
 
-from _types import Ticket
+from _types import Stock, Ticket, Log
 from bot import Bot
+from cogs.accounting import Accounting
 from constants import *
+from utils import calc_discount, split_list, write_to_ws
+
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+def price_fmt(price): return locale.currency(price, grouping=True)
+
+class LogPurchaseModal(discord.ui.Modal):
+    def __init__(self, bot: Bot):
+        self.bot = bot
+        super().__init__(title="Log Purchase")
+    
+    username = discord.ui.TextInput(label="Roblox Username", placeholder="Enter the Roblox username")
+    info = discord.ui.TextInput(label="Payment Info", placeholder="e.g. $cadenkoj")
+
+    methods = {
+        "PayPal": "paypal_email",
+        "Cash App": "cashapp_tag",
+        "Venmo": "venmo_username",
+        "Stripe": "stripe_email",
+        "Crypto": "crypto_address",
+    }
+
+    async def on_submit(self, interaction: discord.Interaction[Bot]):
+        await interaction.response.defer(ephemeral=True)
+
+        is_staff = self.bot.config.roles.staff in interaction.user.roles
+        if not is_staff:
+            raise Exception("You do not have permission to use this command.")
+        
+        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+        filter = {"channel_id": interaction.channel_id}
+        ticket = ticket_collection.find_one(filter)
+
+        user_id = ticket["user_id"]
+        item_ids = ticket["data"]["items"]
+        method = ticket["data"]["payment_method"]
+        subtotal = ticket["data"]["subtotal"]
+        total = ticket["data"]["total"]
+
+        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in item_ids if item_id != None]
+
+        customer = interaction.guild.get_member(user_id)
+
+        purchase_log = await self.log_purchase(
+            customer=customer,
+            username=self.username.value,
+            method=method,
+            info=self.info.value,
+            items=items,
+            subtotal=subtotal,
+            total=total
+        )
+
+    async def log_purchase(
+        self,
+        customer: discord.Member,
+        username: str,
+        method: str,
+        info: str,
+        items: list[Stock],
+        subtotal: int,
+        total: int
+    ) -> tuple[float, discord.Message]:
+        """Logs a purchase and updates channel info."""
+
+        log_collection: Collection[Log] = self.bot.database.get_collection("logs")
+        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        log_channel = self.bot.config.channels.purchases
+
+        discount = subtotal - total
+
+        item_names: list[str] = []
+        for item in items:
+            set = item.get("set", "")
+            name = item["name"]
+            price = item["price"]
+
+            stock_collection.update_one(item, {"$inc": {"quantity": -1}})
+
+            log = Log(user_id=customer.id, username=username, item=item)
+            log[self.methods[method]] = info
+
+            item_names.append(f"{set} {name}")
+            log_collection.insert_one(log)
+
+            try:
+                itemized_discount = discount / len(items)
+                write_to_ws(username, customer.id, name, price - itemized_discount)
+                reaction = '\N{white heavy check mark}'
+            except:
+                reaction = '\N{cross mark}'
+
+        log_count = log_collection.count_documents({"user_id": customer.id})
+        user_logs = log_collection.find({"user_id": customer.id})
+        total_spent = sum([log["item"]["price"] for log in user_logs])
+
+        discount_tag = f" (-{price_fmt(discount)})" if discount > 0 else ""
+
+        log_embed = discord.Embed(
+            color=0x77ABFC,
+            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total)}**{discount_tag}.",
+        )
+
+        log_embed.set_author(name=f"{customer}", icon_url=customer.display_avatar.url)
+        log_embed.add_field(name=f"__Username__", value=username, inline=True)
+        log_embed.add_field(name=f"__{method}__", value=info, inline=True)
+        log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)
+        log_embed.set_footer(text=f"Transaction #{log_count}")
+
+        customer_role = self.bot.config.roles.customer
+        await customer.add_roles(customer_role)
+
+        tier_role = None
+        if total_spent >= 100:
+            tier_role = self.bot.config.roles.tier1
+        if total_spent >= 250:
+            tier_role = self.bot.config.roles.tier2
+        if total_spent >= 500:
+            tier_role = self.bot.config.roles.tier3
+        if total_spent >= 1000:
+            tier_role = self.bot.config.roles.tier4
+        if total_spent >= 1500:
+            tier_role = self.bot.config.roles.tier5
+
+        if tier_role:
+            await customer.add_roles(tier_role, reason=f"Spent ${total_spent:,}")
+
+        message = await log_channel.send(embed=log_embed)
+        await message.add_reaction(reaction)
+        return message
 
 class DynamicDelete(
     discord.ui.DynamicItem[discord.ui.Button],
@@ -35,12 +171,15 @@ class DynamicDelete(
         return cls(channel_id, category)
 
     async def callback(self, interaction: discord.Interaction[Bot]) -> None:
-        await interaction.response.defer(ephemeral=True)
-
         is_staff = interaction.client.config.roles.staff in interaction.user.roles
         if not is_staff:
-            await interaction.followup.send("You do not have permission to use this command.", ephemeral=True)
+            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             return
+        
+        if self.category == "Purchase":
+            modal = LogPurchaseModal(interaction.client)
+            await interaction.response.send_modal(modal)
+            await modal.wait()
 
         embed = discord.Embed(color=0x599ae0)
 
@@ -253,114 +392,247 @@ class CreationModal(discord.ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction[Bot]):
         await interaction.response.defer(ephemeral=True)
+        await create_ticket(interaction, self.category, self.input.value)
 
-        category_name = f"{self.category} Tickets"
-        category = next((category for category in interaction.guild.categories if category.name == category_name), None)
+async def create_ticket(interaction: discord.Interaction[Bot], category: str, reason: str, data: dict = None):
+    category_name = f"{category} Tickets"
+    category_channel = next((category for category in interaction.guild.categories if category.name == category_name), None)
 
-        overwrites = {
-            interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            interaction.client.config.roles.staff: discord.PermissionOverwrite(view_channel=True),
+    overwrites = {
+        interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False),
+        interaction.client.config.roles.staff: discord.PermissionOverwrite(view_channel=True),
+    }
+
+    if not category_channel:
+        category_channel = await interaction.guild.create_category(category_name)
+        await category_channel.create_text_channel('transcripts', overwrites=overwrites)
+        
+    ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+    ticket_count = ticket_collection.count_documents({})
+
+    filter = {"user_id": interaction.user.id, "category": category, "open": True}
+    open_ticket = ticket_collection.find_one(filter)
+
+    if open_ticket:
+        await interaction.followup.send(f"You already have an open ticket at <#{open_ticket['channel_id']}>.", ephemeral=True)
+        return
+    
+    if category == "Purchase":
+        view = PaymentDropdown()
+        await interaction.edit_original_response(embed=None, view=view)
+        await view.wait()
+
+        payment_method = view.payment_method
+        if payment_method == None:
+            return
+
+    ticket_id = str(ticket_count).rjust(4, "0")
+    
+    name = f'ticket-{interaction.user.name[:5]}-{ticket_id}'
+    user_overwrites = {**overwrites, interaction.user: discord.PermissionOverwrite(view_channel=True)}
+    channel = await category_channel.create_text_channel(name, overwrites=user_overwrites)
+
+    embed = discord.Embed(
+        color=0x599ae0,
+        description=f"Your ticket has been created at {channel.mention}."
+    )
+
+    await interaction.edit_original_response(embed=embed, view=None)
+
+    update = {
+        "$set": {
+            "user_id": interaction.user.id,
+            "channel_id": channel.id,
+            "username": interaction.user.name,
+            "category": category,
+            "open": True,
+        }
+    }
+
+    if category == "Purchase":
+        update["$set"]["data"] = {
+            "payment_method": payment_method,
+            **data,
         }
 
-        if not category:
-            category = await interaction.guild.create_category(category_name)
-            await category.create_text_channel('transcripts', overwrites=overwrites)
-            
-        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
-        ticket_count = ticket_collection.count_documents({})
+    ticket_collection.update_one(filter, update, upsert=True)
 
-        filter = {"user_id": interaction.user.id, "category": self.category, "open": True}
-        open_ticket = ticket_collection.find_one(filter)
+    embed = discord.Embed(
+        color=0x599ae0,
+        description=f"""
+Welcome, {interaction.user.mention}!
+Support will be with you shortly. 
+"""
+    )
 
-        if open_ticket:
-            await interaction.followup.send(f"You already have an open ticket at <#{open_ticket['channel_id']}>.", ephemeral=True)
-            return
-        
-        embed = discord.Embed(color=0x599ae0)
+    if category == "Purchase":
+        embed.description += f"\n**Item(s):** {reason}"
+    else:
+        embed.description += f"\n**Reason:** {reason}"
 
-        embed.set_author(
-            name=f"Select your payment method:",
-            icon_url=ICONS.loading
+    embed.set_thumbnail(
+        url=interaction.user.display_avatar.url
+    )
+
+    embed.set_author(
+        name=f"Ticket #{ticket_count} ({category})",
+        icon_url=ICONS.ticket
+    )
+
+    embed.set_footer(
+        text=interaction.guild,
+        icon_url=interaction.guild.icon
+    )
+
+    if category == "Purchase":
+        embed._footer["text"] += f" | Payment Method: {payment_method}"
+
+    view = ManageView(channel.id, category)
+
+    mention = interaction.client.config.roles.staff.mention
+    message = await channel.send(f"{interaction.user.mention} {mention}", embed=embed, view=view)
+    await message.pin()
+
+class PurchaseDropdown(discord.ui.View):
+    def __init__(self, bot: Bot):
+        super().__init__(timeout=None)
+        self.values = []
+        self.sets = defaultdict(lambda: {"price": 0, "total_quantity": 0, "items": []})
+        self.reason = ""
+        self.subtotal = 0
+        self.total = 0
+
+        stock_collection = bot.database.get_collection("stock")
+
+        for stock_item in stock_collection.find().sort("set"):
+            set_name = stock_item.get("set", "")
+
+            self.sets[set_name]["price"] += stock_item["price"]
+            self.sets[set_name]["total_quantity"] += stock_item["quantity"]
+            self.sets[set_name]["items"].append(stock_item)
+
+        ordered_sets = list(self.sets.items())
+        ordered_sets.append(ordered_sets.pop(0))
+
+        options = []
+        for set_name, data in ordered_sets:
+            price = data["price"]
+            total_quantity = data["total_quantity"]
+
+            items: list[Stock] = sorted(data["items"], key=lambda x: x["price"])
+
+            if total_quantity <= 0:
+                continue
+
+            if set_name != "":
+                options.append(
+                    discord.SelectOption(
+                        label=f"{set_name} Set",
+                        description=f"${price:,}",
+                        value=f"{set_name} Set"
+                    )
+                )
+
+            for item in items:
+                objectId = item["_id"]
+                name = item["name"]
+                price = item["price"]
+                quantity = item["quantity"]
+
+                if quantity <= 0:
+                    continue
+
+                options.append(
+                    discord.SelectOption(
+                        label=f"{set_name} {name}",
+                        description=f"${price:,} | {quantity} in stock",
+                        value=str(objectId)
+                    )
+                )
+
+        option_chunks = split_list(options, 25)
+        for i, chunk in enumerate(option_chunks):
+            select = discord.ui.Select(
+                placeholder = "Select your items",
+                custom_id=f"purchase-{i}",
+                options=chunk
+            )
+
+            if i > 0:
+                select.placeholder += " (continued)"
+
+            select.callback = self.selection_callback
+            self.add_item(select)
+
+        checkout = discord.ui.Button(
+            label="Checkout",
+            style=discord.ButtonStyle.primary,
+            custom_id="checkout"
         )
 
-        if self.category == "Purchase":
-            view = PaymentDropdown()
-            message = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+        checkout.callback = self.checkout_callback
+        self.add_item(checkout)
 
-            await view.wait()
-            payment_method = view.payment_method
+    async def selection_callback(self, interaction: discord.Interaction):
+        values = interaction.data["values"][0].rsplit(" ", 1)
 
-            if payment_method == None:
-                return
+        set_name = values[0]
+        item = values[-1]
 
-        ticket_id = str(ticket_count).rjust(4, "0")
-        
-        name = f'ticket-{interaction.user.name[:5]}-{ticket_id}'
-        user_overwrites = {**overwrites, interaction.user: discord.PermissionOverwrite(view_channel=True)}
-        channel = await category.create_text_channel(name, overwrites=user_overwrites)
+        if item == "Set":
+            items = self.sets[set_name]["items"]
+            self.values.extend([str(x["_id"]) for x in items])
+        else:
+            self.values.append(item)
 
-        update = {
-            "$set": {
-                "user_id": interaction.user.id,
-                "channel_id": channel.id,
-                "username": interaction.user.name,
-                "category": self.category,
-                "open": True
-            }
-        }
+        stock_collection: Collection[Stock] = interaction.client.database.get_collection("stock")
+        stock_names = {str(item["_id"]): f"{item.get("set", "")} {item["name"]}" for item in stock_collection.find()}
+        stock_prices = {str(item["_id"]): f"{item["price"]}" for item in stock_collection.find()}
 
-        ticket_collection.update_one(filter, update, upsert=True)
+        self.items = [stock_names[id] for id in self.values]
+        self.reason = "\n- " + "\n- ".join(self.items)
 
         embed = discord.Embed(
             color=0x599ae0,
-            description=f"""
-Welcome, {interaction.user.mention}!
-Support will be with you shortly. 
-""",
+            title="Selected Items:",
+            description=self.reason,
         )
 
-        if self.category == "Purchase":
-            embed.description += f"\n**Item(s)** → {self.input.value} ({payment_method})"
-        else:
-            embed.description += f"\n**Reason** → {self.input.value}"
-
-        embed.set_thumbnail(
-            url=interaction.user.display_avatar.url
-        )
-
-        embed.set_author(
-            name=f"Ticket #{ticket_count} ({self.category})",
-            icon_url=ICONS.ticket
-        )
+        self.subtotal = sum(int(stock_prices[id]) for id in self.values)
+        self.total = self.subtotal - calc_discount(self.subtotal, len(self.values))
 
         embed.set_footer(
-            text=interaction.guild,
-            icon_url=interaction.guild.icon
+            icon_url=interaction.guild.icon,
+            text=f"Subtotal: ${self.subtotal:,}\nTotal: ${self.total:,}"
         )
 
-        view = ManageView(channel.id, self.category)
+        await interaction.response.edit_message(embed=embed, view=self)
 
-        mention = interaction.client.config.roles.staff.mention
-        message = await channel.send(f"{interaction.user.mention} {mention}", embed=embed, view=view)
-
-        await message.pin()
+    async def checkout_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        purchase_data = {
+            "items": self.values,
+            "subtotal": self.subtotal,
+            "total": self.total,
+        }
+        await create_ticket(interaction, "Purchase", self.reason, purchase_data)
 
 class PurchasePanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
     @discord.ui.button(emoji="\N{money with wings}", label="Purchase", style=discord.ButtonStyle.primary, custom_id="purchase_ticket")
-    async def purchase_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        info = discord.ui.TextInput(
-            label='Enter info for your purchase',
-            placeholder='e.g. RGB Karambit',
+    async def purchase_ticket(self, interaction: discord.Interaction[Bot], button: discord.ui.Button):
+        embed = discord.Embed(
+            color=0x599ae0,
+            description=f"Please select the items you'd like to purchase"
         )
 
-        await interaction.response.send_modal(CreationModal('Purchase', info))
+        await interaction.response.send_message(embed=embed, view=PurchaseDropdown(interaction.client), ephemeral=True)
 
     @discord.ui.button(emoji="\N{hourglass}", label="Exclusive", style=discord.ButtonStyle.primary, custom_id="exclusive_ticket")
     async def exclusive_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        info = discord.ui.TextInput(label='Enter info for your purchase')
+        info = discord.ui.TextInput(label='Enter info for your purchase', placeholder='e.g. 2050 VALORANT Points')
         await interaction.response.send_modal(CreationModal('Exclusive', info))
 
 class SupportPanel(discord.ui.View):

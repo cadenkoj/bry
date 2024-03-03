@@ -1,21 +1,17 @@
 import locale
+from collections import defaultdict
 from typing import Optional
-from bson import ObjectId
 
 import discord
+from bson import ObjectId
 from discord import app_commands as apc
 from discord.ext import commands, tasks
-import pymongo
 from pymongo.collection import Collection
-import locale
 
 from _types import Log, Stock
 from bot import Bot
-from utils import write_to_ws
 from constants import *
-
-locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-price_fmt = lambda price: locale.currency(price, grouping=True)
+from utils import write_to_ws
 
 class Accounting(commands.Cog):
     """Commands for accounting stock and payment logs."""
@@ -25,137 +21,21 @@ class Accounting(commands.Cog):
         self.update_channels.start()
         self.update_stock_embed.start()
 
-    methods = [
-        apc.Choice(name="PayPal", value="paypal_email"),
-        apc.Choice(name="Cash App", value="cashapp_tag"),
-        apc.Choice(name="Venmo", value="venmo_username"),
-        apc.Choice(name="Stripe", value="stripe_email"),
-        apc.Choice(name="BTC", value="btc_address"),
-        apc.Choice(name="LTC", value="ltc_address"),
-        apc.Choice(name="ETH", value="eth_address"),
-    ]
-
     item = apc.Group(name="item", description="Manages stock items.")
     log = apc.Group(name="log", description="Manages purchase logs.")
-
-    @log.command()
-    @apc.guild_only()
-    @apc.choices(method=methods)
-    async def create(
-        self,
-        interaction: discord.Interaction,
-        customer: discord.Member,
-        username: str,
-        method: apc.Choice[str],
-        info: str,
-        item1: str,
-        discount: Optional[float] = 0.0,
-        item2: Optional[str] = None,
-        item3: Optional[str] = None,
-        item4: Optional[str] = None,
-        item5: Optional[str] = None,
-    ) -> None:
-        """Logs a sale and updates channel info.
-
-        Parameters
-        ___________
-        customer : discord.Member
-            The member who bought the item.
-        username : str
-            The Roblox username of the user.
-        method : app_commands.Choice[str]
-            The payment method used.
-        info : str
-            The customer's payment info.
-        item1 : str
-            Item 1
-        discount : Optional[float]
-            The discount applied to the full purchase.
-        item2 : Optional[str]
-            Item 2
-        item3 : Optional[str]
-            Item 3
-        item4 : Optional[str]
-            Item 4
-        item5 : Optional[str]
-            Item 5
-        """
-
-        await interaction.response.defer()
-
-        is_staff = self.bot.config.roles.staff in interaction.user.roles
-        if not is_staff:
-            raise Exception("You do not have permission to use this command.")
-
-        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-        items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in [item1, item2, item3, item4, item5] if item_id != None]
-
-        purchase_log = await self.log_purchase(
-            customer=customer,
-            username=username,
-            method=method,
-            info=info,
-            items=items,
-            discount=discount
-        )
-            
-        embed = discord.Embed(
-            color=0x599ae0,
-            description=f"View the purchase log here: {purchase_log.jump_url}"
-        )
-        
-        embed.set_author(
-            name=f"Payment Completed",
-            icon_url=ICONS.ticket
-        )
-
-        await interaction.followup.send(embed=embed)
 
     @commands.hybrid_command()
     @commands.guild_only()
     async def stock(self, ctx: commands.Context) -> None:
         """Displays the curent available stock."""
 
-        await ctx.defer();
+        await ctx.defer()
 
         is_staff = self.bot.config.roles.staff in ctx.author.roles
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
 
-        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-
-        stock_embed = discord.Embed(color=0x77ABFC, title="Stock")
-        for stock_item in stock_collection.find({"name": {"$regex": "Set$"}}).sort("name"):
-            name = stock_item["name"]
-            price = stock_item["price"]
-
-            stock_embed.add_field(name=f"{name} (${price:,})", value="")
-        stock_embed.add_field(name="Miscellaneous", value="")
-
-        for stock_item in stock_collection.find({"name": {"$not": {"$regex": "Set$"}}}).sort("price", pymongo.DESCENDING):
-            name = stock_item["name"]
-            price = stock_item["price"]
-            quantity = stock_item["quantity"]
-
-            if " " in name:
-                set_name, _ = name.rsplit(" ", 1)
-            else:
-                set_name = "Miscellaneous"
-
-            i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
-
-            field.value += f"\n- {name} - ${price:,} "
-
-            if quantity >= 1:
-                field.value += f"`{quantity}x`"
-            else:
-                field.value += "`\N{CROSS MARK}`"
-            
-            stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
-
-        if not stock_embed.fields[-1].value:
-            stock_embed.remove_field(-1)
-
+        stock_embed = self.create_stock_embed()
         await ctx.send(embed=stock_embed)
 
     @apc.command()
@@ -183,6 +63,7 @@ class Accounting(commands.Cog):
         if stock_item is None:
             raise commands.BadArgument("This item does not exist.")
 
+        set = stock_item.get("set", "")
         name = stock_item["name"]
         price = stock_item["price"]
         combined_quantity = stock_item["quantity"] + quantity
@@ -191,7 +72,7 @@ class Accounting(commands.Cog):
 
         restock_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"Restocked **{name}** by **{quantity}x** ({combined_quantity} Total)",
+            description=f"Restocked **{set} {name}** by `{quantity}` ({combined_quantity} Total)",
             timestamp=discord.utils.utcnow(),
         )
 
@@ -212,9 +93,7 @@ class Accounting(commands.Cog):
             raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-        stock = stock_collection.find()
-
-        for stock_item in stock:
+        for stock_item in stock_collection.find():
             stock_collection.update_one(stock_item, {"$set": {"quantity": 0}})
 
         await interaction.followup.send("Cleared the stock.", ephemeral=True)
@@ -237,16 +116,15 @@ class Accounting(commands.Cog):
             raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-        stock = stock_collection.find()
+        for stock_item in stock_collection.find():
+            stock_collection.update_one(
+                stock_item, {"$set": {"quantity": amount}})
 
-        for stock_item in stock:
-            stock_collection.update_one(stock_item, {"$set": {"quantity": amount}})
-
-        await interaction.followup.send(f"Filled the stock with **{amount}x** per item.", ephemeral=True)
+        await interaction.followup.send(f"Filled the stock with `{amount}` per item.", ephemeral=True)
 
     @item.command()
     @apc.guild_only()
-    async def add(self, interaction: discord.Interaction, name: str, price: int, quantity: int) -> None:
+    async def add(self, interaction: discord.Interaction, name: str, price: int, quantity: int, set: Optional[str]) -> None:
         """Adds an item to the stock list.
 
         Parameters
@@ -257,6 +135,8 @@ class Accounting(commands.Cog):
             The price of the item.
         quantity : int
             The amount of the item in stock.
+        set : Optional[str]
+            The set the item belongs to.
         """
 
         await interaction.response.defer()
@@ -266,20 +146,21 @@ class Accounting(commands.Cog):
             raise Exception("You do not have permission to use this command.")
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-        stock_item = stock_collection.find_one({"name": name})
+        stock_item = stock_collection.find_one({"set": set, "name": name})
 
         if stock_item is not None:
             raise commands.BadArgument("This item already exists.")
 
-        stock_item = Stock(name=name, price=price, quantity=quantity)
+        stock_item = Stock(set=set, name=name, price=price, quantity=quantity)
         stock_collection.insert_one(stock_item)
 
         item_embed = discord.Embed(
             color=0x77ABFC,
-            title=f"Added {name}",
+            title=f"Added {set} {name}",
             timestamp=discord.utils.utcnow(),
         )
 
+        item_embed.add_field(name="Set", value=f"```{set}```", inline=True)
         item_embed.add_field(name="Name", value=f"```{name}```", inline=True)
         item_embed.add_field(name="Price", value=f"```${price:,}```", inline=True)
         item_embed.add_field(name="In Stock", value=f"```{quantity}```", inline=True)
@@ -292,6 +173,7 @@ class Accounting(commands.Cog):
         self,
         interaction: discord.Interaction,
         item: str,
+        set: Optional[str],
         name: Optional[str],
         price: Optional[int],
         quantity: Optional[int],
@@ -302,6 +184,8 @@ class Accounting(commands.Cog):
         ___________
         item : str
             The name of the item to update.
+        set : Optional[str]
+            The new set of the item.
         name : Optional[str]
             The new name of the item.
         price : Optional[int]
@@ -324,11 +208,12 @@ class Accounting(commands.Cog):
 
         if any([name, price, quantity]) is False:
             raise commands.BadArgument("You must specify at least one attribute to update.")
-        
+
+        old_set = stock_item.get("set", "")
         old_name = stock_item["name"]
         old_price = stock_item["price"]
         old_quantity = stock_item["quantity"]
-        
+
         new_item = stock_item.copy()
 
         item_embed = discord.Embed(
@@ -337,6 +222,7 @@ class Accounting(commands.Cog):
             timestamp=discord.utils.utcnow(),
         )
 
+        item_embed.add_field(name="Set", value=f"```{set or old_set}```", inline=True)
         item_embed.add_field(name="Name", value=f"```{name or old_name}```", inline=True)
         item_embed.add_field(name="Price", value=f"```${price or old_price:,}```", inline=True)
         item_embed.add_field(name="In Stock", value=f"```{quantity or old_quantity}```", inline=True)
@@ -351,7 +237,8 @@ class Accounting(commands.Cog):
                 price_embed = discord.Embed(
                     color=0x77ABFC,
                     title=f"{price_icon} Price Updated",
-                    description=f"**{new_item['name']}** has been updated from **${old_price:,}** to **${price:,}**.",
+                    description=f"**{new_item['set']} {new_item['name']}** has been updated from **${
+                        old_price:,}** to **${price:,}**.",
                 )
 
                 await updates_channel.send(content="<@&1167290712220504064>", embed=price_embed)
@@ -360,7 +247,6 @@ class Accounting(commands.Cog):
             new_item["quantity"] = quantity
 
         stock_collection.update_one(stock_item, {"$set": new_item})
-
         await interaction.followup.send(embed=item_embed)
 
     @item.command()
@@ -386,6 +272,7 @@ class Accounting(commands.Cog):
         if stock_item is None:
             raise commands.BadArgument("This item does not exist.")
 
+        set = stock_item.get("set", "")
         name = stock_item["name"]
         price = stock_item["price"]
 
@@ -393,7 +280,7 @@ class Accounting(commands.Cog):
 
         remove_item_embed = discord.Embed(
             color=0x77ABFC,
-            description=f"Removed **{name}** from the stock.",
+            description=f"Removed **{set} {name}** from the stock.",
             timestamp=discord.utils.utcnow(),
         )
 
@@ -412,91 +299,6 @@ class Accounting(commands.Cog):
 
         return total_price
 
-    async def log_purchase(
-        self,
-        customer: discord.Member,
-        username: str,
-        method: apc.Choice[str],
-        info: str,
-        items: list[Stock],
-        discount: Optional[float] = 0.0
-    ) -> tuple[float, discord.Message]:
-        """Logs a purchase and updates channel info."""
-
-        log_collection: Collection[Log] = self.bot.database.get_collection("logs")
-        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-        log_channel = self.bot.config.channels.purchases
-    
-        total = self.calc_total(items, discount)
-
-        item_names: list[str] = []
-        for item in items:
-            name = item["name"]
-            price = item["price"]
-
-            stock_collection.update_one(item, {"$inc": {"quantity": -1}})
-
-            log = Log(user_id=customer.id, username=username, item=item)
-            log[method.value] = info
-
-            item_names.append(name)
-            log_collection.insert_one(log)
-
-            try:
-                itemized_discount = discount / len(items)
-                write_to_ws(username, customer.id, name, price - itemized_discount)
-                reaction = '\N{WHITE HEAVY CHECK MARK}'
-            except:
-                reaction = '\N{CROSS MARK}'
-
-        log_count = log_collection.count_documents({"user_id": customer.id})
-        user_logs = log_collection.find({"user_id": customer.id})
-        total_spent = sum([log["item"]["price"] for log in user_logs])
-
-        discount_tag = f" (-{price_fmt(discount)})" if discount > 0 else ""
-
-        log_embed = discord.Embed(
-            color=0x77ABFC,
-            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total)}**{discount_tag}.",
-        )
-
-        if method.value == "cashapp_receipt":
-            info = f"[Web Receipt]({info})"
-
-        log_embed.set_author(name=f"{customer}", icon_url=customer.display_avatar.url)
-        log_embed.add_field(name=f"__Username__", value=username, inline=True)
-        log_embed.add_field(name=f"__{method.name}__", value=info, inline=True)
-        log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)
-        log_embed.set_footer(text=f"Transaction #{log_count}")
-
-        customer_role = self.bot.config.roles.customer
-        await customer.add_roles(customer_role)
-
-        tier_role = None
-        if total_spent >= 100:
-            tier_role = self.bot.config.roles.tier1
-        if total_spent >= 250:
-            tier_role = self.bot.config.roles.tier2
-        if total_spent >= 500:
-            tier_role = self.bot.config.roles.tier3
-        if total_spent >= 1000:
-            tier_role = self.bot.config.roles.tier4
-        if total_spent >= 1500:
-            tier_role = self.bot.config.roles.tier5
-
-        if tier_role:
-            await customer.add_roles(tier_role, reason=f"Spent ${total_spent:,}")
-
-        message = await log_channel.send(embed=log_embed)
-        await message.add_reaction(reaction)
-        return message
-        
-    # Logs
-    @create.autocomplete("item1")
-    @create.autocomplete("item2")
-    @create.autocomplete("item3")
-    @create.autocomplete("item4")
-    @create.autocomplete("item5")
     # Stock
     @restock.autocomplete("item")
     # Updates
@@ -507,22 +309,62 @@ class Accounting(commands.Cog):
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
 
-        data = []
+        choices = []
+        for item in stock_collection.find().sort("name"):
+            objectId = item["_id"]
+            set_name = item.get("set", "")
+            name = item["name"]
+            price = item["price"]
+            quantity = item["quantity"]
 
-        for stock_item in stock_collection.find().sort("name"):
-            objectId = stock_item["_id"]
-            item = stock_item["name"]
+            if current.lower() in f"{set_name} {name}".strip().lower():
+                display_item = f"{set_name} {name} (${price})"
+                if quantity < 1:
+                    choices.append(apc.Choice(name=f"{display_item} | Out of Stock", value=str(objectId)))
+                else:
+                    choices.append(apc.Choice(name=f"{display_item} | Stock: {quantity}", value=str(objectId)))
+
+        return choices[:25]
+            
+    def create_stock_embed(self):
+        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        sets = defaultdict(lambda: {"price": 0, "items": []})
+
+        stock_embed = discord.Embed(color=0x77ABFC, title="Bry's Shop Stock", timestamp=discord.utils.utcnow())
+        stock_embed.set_footer(text="Last Updated")
+        
+        for stock_item in stock_collection.find().sort("set"):
+            set_name = stock_item.get("set") or "Other"
+            price = stock_item["price"]
+
+            sets[set_name]["price"] += price
+            sets[set_name]["items"].append(stock_item)
+
+        for set_name, data in sets.items():
+            name = stock_item["name"]
             price = stock_item["price"]
             quantity = stock_item["quantity"]
 
-            if current.lower() in item.lower():
-                display_item = f"{item} (${price})"
-                if quantity < 1:
-                    data.append(apc.Choice(name=f"{display_item} — Out of Stock", value=str(objectId)))
-                else:
-                    data.append(apc.Choice(name=f"{display_item} — {quantity}x", value=str(objectId)))
+            items: list[Stock] = data["items"]
+            items.sort(key=lambda x: x["price"])
 
-        return data[:25]
+            field_value = ""
+            for item in items:
+                name = item["name"]
+                price = item["price"]
+                quantity = item["quantity"]
+
+                field_template = f"` ${price:,} ` {name}"
+
+                if quantity >= 1:
+                    field_value += f"\n- {field_template} ` Stock: {quantity} `"
+                else:
+                    field_value += f"\n- {field_template} ` Out of Stock `"
+
+            stock_embed.add_field(name=set_name, value=field_value, inline=False)
+
+        stock_embed._fields.append(stock_embed._fields.pop(0))
+        return stock_embed
 
     @tasks.loop(minutes=10)
     async def update_channels(self) -> None:
@@ -548,43 +390,7 @@ class Accounting(commands.Cog):
         """Updates the stock embed."""
 
         stock_channel = self.bot.config.channels.shop
-
-        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-
-        stock_embed = discord.Embed(color=0x77ABFC, title="Stock", timestamp=discord.utils.utcnow())
-        stock_embed.set_footer(text="Last Updated")
-        
-        for stock_item in stock_collection.find({"name": {"$regex": "Set$"}}).sort("name"):
-            name = stock_item["name"]
-            price = stock_item["price"]
-
-            stock_embed.add_field(name=f"{name} (${price})", value="")
-        stock_embed.add_field(name="Miscellaneous", value="")
-
-        for stock_item in stock_collection.find({"name": {"$not": {"$regex": "Set$"}}}).sort("price", pymongo.DESCENDING):
-            name = stock_item["name"]
-            price = stock_item["price"]
-            quantity = stock_item["quantity"]
-
-            if " " in name:
-                set_name, _ = name.rsplit(" ", 1)
-            else:
-                set_name = "Miscellaneous"
-            
-            i, field = next(((i, field) for (i, field) in enumerate(stock_embed.fields) if field.name.rsplit(" ", 1)[0] == f"{set_name} Set"), (-1, stock_embed.fields[-1]))
-
-            field.value += f"\n- {name} (${price:,}) – "
-
-            if quantity >= 1:
-                field.value += f"`Stock: {quantity}`"
-            else:
-                field.value += "`(Out of Stock)`"
-        
-            stock_embed.set_field_at(i, name=field.name, value=field.value, inline=False)
-
-        if not stock_embed.fields[-1].value:
-            stock_embed.remove_field(-1)
-
+        stock_embed = self.create_stock_embed()
         stock_embed.set_footer(text="Last Updated")
 
         stock_message = None

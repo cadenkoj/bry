@@ -15,6 +15,16 @@ from constants import *
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
+def calc_discount(total, item_count):
+ if item_count >= 2 and total >= 50:
+     discount = (total // 50) * 5
+     return min(discount, 50)
+ else:
+     return 0
+ 
+def split_list(lst, chunk_size):
+    return [lst[i:i+chunk_size] for i in range(0, len(lst), chunk_size)]
+
 def fetch_roblox_id(username: str) -> int | None:
     try:
         payload = json.dumps({
