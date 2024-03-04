@@ -1,21 +1,17 @@
 import asyncio
 from collections import defaultdict
 import locale
-import os
 import re
-from typing import Optional
 from bson import ObjectId
 import requests
 import humanize
 import asyncio
-from discord import app_commands as apc
 
 import discord
 from pymongo.collection import Collection
 
 from _types import Stock, Ticket, Log
 from bot import Bot
-from cogs.accounting import Accounting
 from constants import *
 from utils import calc_discount, split_list, write_to_ws
 
@@ -461,7 +457,8 @@ async def create_ticket(interaction: discord.Interaction[Bot], category: str, re
         color=0x599ae0,
         description=f"""
 Welcome, {interaction.user.mention}!
-Support will be with you shortly. 
+Support will be with you shortly.
+Feel free to provide more info in the meantime.
 """
     )
 
@@ -648,6 +645,11 @@ class SupportPanel(discord.ui.View):
     async def vbucks_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(label='Enter reason for your support')
         await interaction.response.send_modal(CreationModal('Middleman', info))
+
+    @discord.ui.button(emoji="\N{sleuth or spy}", label="Scam Report", style=discord.ButtonStyle.primary, custom_id="scam_ticket")
+    async def scam_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(label="Enter user you're reporting", placeholder="User ID/Username")
+        await interaction.response.send_modal(CreationModal('Scam Report', info))
 
 async def setup(bot: Bot):
     bot.add_view(PurchasePanel())

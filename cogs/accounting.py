@@ -1,4 +1,3 @@
-import locale
 from collections import defaultdict
 from typing import Optional
 
@@ -11,7 +10,7 @@ from pymongo.collection import Collection
 from _types import Log, Stock
 from bot import Bot
 from constants import *
-from utils import write_to_ws
+
 
 class Accounting(commands.Cog):
     """Commands for accounting stock and payment logs."""

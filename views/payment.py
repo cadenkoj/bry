@@ -1,9 +1,5 @@
-from typing import Collection
-
 import discord
-from discord import ui
 
-from _types import Log
 from bot import Bot
 from constants import *
 

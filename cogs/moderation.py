@@ -1,9 +1,7 @@
 import asyncio
-from datetime import datetime, timedelta
-import math
+from datetime import timedelta
 from typing import Optional
 import discord
-from discord import app_commands as apc
 from discord.ext import commands
 import humanize
 
