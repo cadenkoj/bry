@@ -14,10 +14,8 @@ class Log(TypedDict):
     user_id: int
     username: str
     item: Item
-    cashapp_tag: NotRequired[str]
     paypal_email: NotRequired[str]
-    venmo_username: NotRequired[str]
-    stripe_email: NotRequired[str]
+    cashapp_tag: NotRequired[str]
     crypto_address: NotRequired[str]
 
 

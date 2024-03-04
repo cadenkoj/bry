@@ -2,6 +2,7 @@ import asyncio
 from collections import defaultdict
 import locale
 import re
+from typing import Optional
 from bson import ObjectId
 import requests
 import humanize
@@ -24,14 +25,14 @@ class LogPurchaseModal(discord.ui.Modal):
         super().__init__(title="Log Purchase")
     
     username = discord.ui.TextInput(label="Roblox Username", placeholder="Enter the Roblox username")
-    info = discord.ui.TextInput(label="Payment Info", placeholder="e.g. $cadenkoj")
+    info = discord.ui.TextInput(label="Payment Info", placeholder="e.g. $cadenkoj", required=False)
+    discount = discord.ui.TextInput(label="Discount", placeholder="e.g. 10", required=False)
 
     methods = {
-        "PayPal": "paypal_email",
         "Cash App": "cashapp_tag",
-        "Venmo": "venmo_username",
-        "Stripe": "stripe_email",
+        "PayPal": "paypal_email",
         "Crypto": "crypto_address",
+        "Limited Items": "limited_items"
     }
 
     async def on_submit(self, interaction: discord.Interaction[Bot]):
@@ -55,15 +56,17 @@ class LogPurchaseModal(discord.ui.Modal):
         items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in item_ids if item_id != None]
 
         customer = interaction.guild.get_member(user_id)
+        discount = int(self.discount.value) if self.discount.value else 0
+        info = self.info.value if self.info.value else "No info provided."
 
-        purchase_log = await self.log_purchase(
+        await self.log_purchase(
             customer=customer,
             username=self.username.value,
             method=method,
-            info=self.info.value,
             items=items,
             subtotal=subtotal,
-            total=total
+            total=total - discount,
+            info=info,
         )
 
     async def log_purchase(
@@ -71,10 +74,10 @@ class LogPurchaseModal(discord.ui.Modal):
         customer: discord.Member,
         username: str,
         method: str,
-        info: str,
         items: list[Stock],
         subtotal: int,
-        total: int
+        total: int,
+        info: str
     ) -> tuple[float, discord.Message]:
         """Logs a purchase and updates channel info."""
 
