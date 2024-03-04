@@ -50,19 +50,24 @@ header_styles = {
     "backgroundColor": {
       "red": 0.92,
       "green": 0.82,
-      "blue": 0.86
+      "blue": 0.86,
     },
     "horizontalAlignment": "CENTER",
     "textFormat": {
       "fontSize": 12,
-      "bold": True
+      "bold": True,
     }
 }
 
 row_styles = {
+    "backgroundColor": {
+      "red": 1,
+      "green": 1,
+      "blue": 1,
+    },
     "horizontalAlignment": "CENTER",
     "textFormat": {
-      "fontSize": 10
+      "fontSize": 10,
     }
 }
 
