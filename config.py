@@ -16,6 +16,7 @@ class ChannelConfig:
     shop: TextChannel
     updates: TextChannel
     boosts: TextChannel
+    scams: TextChannel
 
 
 @dataclass
@@ -50,6 +51,7 @@ def get_config(bot: Bot):
                 shop=bot.get_channel(1213588818628968528),
                 updates=bot.get_channel(1213588854041215016),
                 boosts=bot.get_channel(1213583947154333756),
+                scams=bot.get_channel(1214008347863552050),
             ),
             roles=RolesConfig(
                 staff=guild.get_role(1146375334170730548),
@@ -74,6 +76,7 @@ def get_config(bot: Bot):
                 shop=bot.get_channel(1203847411437543474),
                 updates=bot.get_channel(1203847411437543474),
                 boosts=bot.get_channel(1203847411437543474),
+                scams=bot.get_channel(1203847411437543474),
             ),
             roles=RolesConfig(
                 staff=guild.get_role(1203847285633720350),

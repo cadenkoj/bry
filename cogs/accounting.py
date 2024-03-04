@@ -20,8 +20,65 @@ class Accounting(commands.Cog):
         self.update_channels.start()
         self.update_stock_embed.start()
 
-    item = apc.Group(name="item", description="Manages stock items.")
-    log = apc.Group(name="log", description="Manages purchase logs.")
+    item = apc.Group(name="item", description="Manages stock items")
+    log = apc.Group(name="log", description="Manages logs")
+
+    @log.command()
+    @apc.guild_only()
+    async def scam(
+        self,
+        interaction: discord.Interaction,
+        username: str,
+        user_id: str,
+        reporter: discord.Member,
+        reason: str,
+        proof: discord.Attachment
+    ) -> None:
+        """Logs a scam report.
+
+        Parameters
+        ___________
+        username : str
+            The username of the scammer.
+        user_id : str
+            The user ID of the scammer.
+        reporter : discord.Member
+            The member who reported the scam.
+        reason : str
+            The reason for the scam report.
+        proof : discord.Attachment
+            The proof of the scam.
+        """
+
+        await interaction.response.defer()
+
+        is_staff = self.bot.config.roles.staff in interaction.user.roles
+        if not is_staff:
+            raise Exception("You do not have permission to use this command.")
+
+        embed = discord.Embed(
+            color=0xff4f4f,
+            title="Scam Report",
+            timestamp=discord.utils.utcnow(),
+        )
+
+        embed.add_field(name="Username", value=username, inline=True)
+        embed.add_field(name="User ID", value=f"`{user_id}`", inline=True)
+        embed.add_field(name="Reporter", value=reporter.mention, inline=True)
+        embed.add_field(name="Reason", value=reason, inline=False)
+
+        embed.set_image(url=proof.url)
+        embed.set_footer(text=interaction.guild.name, icon_url=interaction.guild.icon)
+        
+        scams_channel = self.bot.config.channels.scams
+        message = await scams_channel.send(embed=embed)
+
+        embed = discord.Embed(
+            color=0x599ae0,
+            description=f"View the scam log here: {message.jump_url}"
+        )
+
+        await interaction.followup.send(embed=embed)
 
     @commands.hybrid_command()
     @commands.guild_only()
