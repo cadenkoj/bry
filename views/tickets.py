@@ -437,7 +437,7 @@ async def create_ticket(interaction: discord.Interaction[Bot], category: str, re
         description=f"Your ticket has been created at {channel.mention}."
     )
 
-    await interaction.edit_original_response(embed=embed, view=None)
+    await interaction.followup.send(embed=embed, view=None)
 
     update = {
         "$set": {
