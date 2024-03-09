@@ -1,4 +1,6 @@
 from collections import defaultdict
+from datetime import datetime
+import locale
 from typing import Optional
 
 import discord
@@ -7,10 +9,13 @@ from discord import app_commands as apc
 from discord.ext import commands, tasks
 from pymongo.collection import Collection
 
-from _types import Log, Stock
+from _types import Log, Stock, Ticket
 from bot import Bot
 from constants import *
+from utils import write_to_ws
 
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+def price_fmt(price): return locale.currency(price, grouping=True)
 
 class Accounting(commands.Cog):
     """Commands for accounting stock and payment logs."""
@@ -23,6 +28,138 @@ class Accounting(commands.Cog):
     item = apc.Group(name="item", description="Manages stock items")
     log = apc.Group(name="log", description="Manages logs")
 
+    methods = {
+        "Cash App": "cashapp_tag",
+        "PayPal": "paypal_email",
+        "Crypto": "crypto_address",
+        "Limited Items": "limited_items"
+    }
+
+    @log.command()
+    @apc.guild_only()
+    async def purchase(
+        self,
+        interaction: discord.Interaction,
+        customer: discord.Member,
+        info: str,
+        discount: Optional[float],
+    ):
+        await interaction.response.defer(ephemeral=True)
+
+        is_staff = self.bot.config.roles.staff in interaction.user.roles
+        if not is_staff:
+            raise Exception("You do not have permission to use this command.")
+        
+        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
+        filter = {"channel_id": interaction.channel_id}
+        ticket = ticket_collection.find_one(filter)
+
+        if ticket is None:
+            raise Exception("No active ticket found.")
+
+        item_ids = ticket["data"]["items"]
+        method = ticket["data"]["payment_method"]
+        subtotal = ticket["data"]["subtotal"]
+        total = ticket["data"]["total"]
+
+        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in item_ids if item_id != None]
+
+        discount = int(self.discount.value) if self.discount.value else 0
+        info = self.info.value if self.info.value else "No info provided."
+
+        await self.log_purchase(
+            customer=customer,
+            username=self.username.value,
+            method=method,
+            items=items,
+            subtotal=subtotal,
+            total=total - discount,
+            info=info,
+        )
+
+    async def log_purchase(
+        self,
+        customer: discord.Member,
+        username: str,
+        method: str,
+        items: list[Stock],
+        subtotal: int,
+        total: int,
+        info: str
+    ) -> tuple[float, discord.Message]:
+        """Logs a purchase and updates channel info."""
+
+        log_collection: Collection[Log] = self.bot.database.get_collection("logs")
+        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        log_channel = self.bot.config.channels.purchases
+
+        discount = subtotal - total
+
+        item_names: list[str] = []
+        for item in items:
+            set = item.get("set", "")
+            name = item["name"]
+            price = item["price"]
+
+            stock_collection.update_one(item, {"$inc": {"quantity": -1}})
+
+            log = Log(user_id=customer.id, username=username, item=item, created_at=datetime.utcnow())
+            log[self.methods[method]] = info
+
+            item_names.append(f"{set} {name}")
+            log_collection.insert_one(log)
+
+            today = datetime.today()
+            recent_logs = log_collection.find({"created_at": {"$gte": today}})
+            new_total = sum([log["item"]["price"] for log in recent_logs])
+
+            try:
+                itemized_discount = discount / len(items)
+                write_to_ws(new_total, username, customer.id, name, price - itemized_discount)
+                reaction = '\N{white heavy check mark}'
+            except:
+                reaction = '\N{cross mark}'
+
+        log_count = log_collection.count_documents({"user_id": customer.id})
+        user_logs = log_collection.find({"user_id": customer.id})
+        total_spent = sum([log["item"]["price"] for log in user_logs])
+
+        discount_tag = f" (-{price_fmt(discount)})" if discount > 0 else ""
+
+        log_embed = discord.Embed(
+            color=0x77ABFC,
+            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total)}**{discount_tag}.",
+        )
+
+        log_embed.set_author(name=f"{customer}", icon_url=customer.display_avatar.url)
+        log_embed.add_field(name=f"__Username__", value=username, inline=True)
+        log_embed.add_field(name=f"__{method}__", value=info, inline=True)
+        log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)
+        log_embed.set_footer(text=f"Transaction #{log_count}")
+
+        customer_role = self.bot.config.roles.customer
+        await customer.add_roles(customer_role)
+
+        tier_role = None
+        if total_spent >= 100:
+            tier_role = self.bot.config.roles.tier1
+        if total_spent >= 250:
+            tier_role = self.bot.config.roles.tier2
+        if total_spent >= 500:
+            tier_role = self.bot.config.roles.tier3
+        if total_spent >= 1000:
+            tier_role = self.bot.config.roles.tier4
+        if total_spent >= 1500:
+            tier_role = self.bot.config.roles.tier5
+
+        if tier_role:
+            await customer.add_roles(tier_role, reason=f"Spent ${total_spent:,}")
+
+        message = await log_channel.send(embed=log_embed)
+        await message.add_reaction(reaction)
+        return message
+
     @log.command()
     @apc.guild_only()
     async def scam(
@@ -31,9 +168,13 @@ class Accounting(commands.Cog):
         username: str,
         user_id: str,
         roblox: str,
-        reporter: discord.Member,
         reason: str,
-        proof: discord.Attachment
+        proof1: discord.Attachment,
+        reporter: Optional[discord.Member],
+        proof2: Optional[discord.Attachment],
+        proof3: Optional[discord.Attachment],
+        proof4: Optional[discord.Attachment],
+
     ) -> None:
         """Logs a scam report.
 
@@ -44,13 +185,19 @@ class Accounting(commands.Cog):
         user_id : str
             The user ID of the scammer.
         roblox : str
-            The Roblox username of the scammer.
-        reporter : discord.Member
-            The member who reported the scam.
+            The Roblox profile of the scammer.
         reason : str
             The reason for the scam report.
-        proof : discord.Attachment
-            The proof of the scam.
+        proof1 : discord.Attachment
+            The first piece of proof.
+        reporter : Optional[discord.Member]
+            The member who reported the scam.
+        proof2 : Optional[discord.Attachment]
+            The second piece of proof.
+        proof3 : Optional[discord.Attachment]
+            The third piece of proof.
+        proof4 : Optional[discord.Attachment]
+            The fourth piece of proof.
         """
 
         await interaction.response.defer()
@@ -62,6 +209,7 @@ class Accounting(commands.Cog):
         embed = discord.Embed(
             color=0xff4f4f,
             title="Scam Report",
+            url="https://romarket.co/shop/bry",
             timestamp=discord.utils.utcnow(),
         )
 
@@ -70,11 +218,18 @@ class Accounting(commands.Cog):
         embed.add_field(name="Reporter", value=reporter.mention, inline=True)
         embed.add_field(name="Reason", value=reason, inline=False)
 
-        embed.set_image(url=proof.url)
+        embed.set_image(url=proof1.url)
         embed.set_footer(text=interaction.guild.name, icon_url=interaction.guild.icon)
-        
+        embeds = [embed]
+
+        other_proofs = [proof2, proof3, proof4]
+        for proof in [x for x in other_proofs if x is not None]:
+            proof_embed = discord.Embed(url="https://romarket.co/shop/bry",)
+            proof_embed.set_image(url=proof.url)
+            embeds.append(proof_embed)
+            
         scams_channel = self.bot.config.channels.scams
-        message = await scams_channel.send(embed=embed)
+        message = await scams_channel.send(embeds=embeds)
 
         embed = discord.Embed(
             color=0x599ae0,

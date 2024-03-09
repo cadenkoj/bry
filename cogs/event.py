@@ -77,13 +77,17 @@ Channel %s (ID: %d)""",
             return
 
         if message.channel.id == 1213589851065163806:
+            ctx = await self.bot.get_context(message)
+
+            if ctx.valid:
+                return
+
             embed = discord.Embed(
                 color=0xE24C4B,
                 description=f"{EMOJIS.error} Please only use commands in this channel.",
             )
 
-            await message.reply(embed=embed, mention_author=True, delete_after=5)
-            await asyncio.sleep(5)
+            await message.reply(embed=embed, mention_author=True, delete_after=3)
             await message.delete()
         
 

@@ -1,12 +1,11 @@
-import asyncio
 import json
 import locale
 import logging
 import os
 import re
 from datetime import datetime, timedelta
-import discord
 
+import discord
 import gspread
 import requests
 from oauth2client.service_account import ServiceAccountCredentials
@@ -71,7 +70,7 @@ row_styles = {
     }
 }
 
-def write_to_ws(username: str, user_id: int, item: str, price: int) -> None:
+def write_to_ws(new_total: int, username: str, user_id: int, item: str, price: int) -> None:
     if not IS_PROD:
         return
 
@@ -105,15 +104,12 @@ def write_to_ws(username: str, user_id: int, item: str, price: int) -> None:
     ws.format([f"A{row}", f"C{row}:D{row}"], {**row_styles, "textFormat": {"bold": False}})
     ws.format([f"B{row}", f"E{row}:G{row}"], {**row_styles, "textFormat": {"bold": True}})
 
-    total_cost = price
     header_row = 0
     for i, row in enumerate(existing_data, start=2):
         if row[0] == "Date":
             header_row = i
-        if row[0] == date:
-            total_cost += float(re.sub(r'[\$,]', '', row[5]))
 
-    ws.update_cell(header_row, 7, locale.currency(total_cost, grouping=True))
+    ws.update_cell(header_row, 7, locale.currency(new_total, grouping=True))
 
 def parse_human_duration(duration: str) -> timedelta:
     components = {

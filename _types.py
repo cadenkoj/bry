@@ -1,3 +1,4 @@
+import datetime
 from typing import NotRequired, TypedDict
 
 from bson import ObjectId
@@ -17,6 +18,7 @@ class Log(TypedDict):
     paypal_email: NotRequired[str]
     cashapp_tag: NotRequired[str]
     crypto_address: NotRequired[str]
+    created_at: NotRequired[datetime]
 
 
 class Stock(Item):

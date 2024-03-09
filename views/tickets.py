@@ -1,151 +1,17 @@
 import asyncio
-from collections import defaultdict
-import locale
 import re
-from typing import Optional
-from bson import ObjectId
-import requests
-import humanize
-import asyncio
+from collections import defaultdict
 
 import discord
+import humanize
+import requests
 from pymongo.collection import Collection
 
-from _types import Stock, Ticket, Log
+from _types import Stock, Ticket
 from bot import Bot
 from constants import *
-from utils import calc_discount, split_list, write_to_ws
+from utils import calc_discount, split_list
 
-locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-def price_fmt(price): return locale.currency(price, grouping=True)
-
-class LogPurchaseModal(discord.ui.Modal):
-    def __init__(self, bot: Bot):
-        self.bot = bot
-        super().__init__(title="Log Purchase")
-    
-    username = discord.ui.TextInput(label="Roblox Username", placeholder="Enter the Roblox username")
-    info = discord.ui.TextInput(label="Payment Info", placeholder="e.g. $cadenkoj", required=False)
-    discount = discord.ui.TextInput(label="Discount", placeholder="e.g. 10", required=False)
-
-    methods = {
-        "Cash App": "cashapp_tag",
-        "PayPal": "paypal_email",
-        "Crypto": "crypto_address",
-        "Limited Items": "limited_items"
-    }
-
-    async def on_submit(self, interaction: discord.Interaction[Bot]):
-        await interaction.response.defer(ephemeral=True)
-
-        is_staff = self.bot.config.roles.staff in interaction.user.roles
-        if not is_staff:
-            raise Exception("You do not have permission to use this command.")
-        
-        ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
-        filter = {"channel_id": interaction.channel_id}
-        ticket = ticket_collection.find_one(filter)
-
-        user_id = ticket["user_id"]
-        item_ids = ticket["data"]["items"]
-        method = ticket["data"]["payment_method"]
-        subtotal = ticket["data"]["subtotal"]
-        total = ticket["data"]["total"]
-
-        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-        items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in item_ids if item_id != None]
-
-        customer = interaction.guild.get_member(user_id)
-        discount = int(self.discount.value) if self.discount.value else 0
-        info = self.info.value if self.info.value else "No info provided."
-
-        await self.log_purchase(
-            customer=customer,
-            username=self.username.value,
-            method=method,
-            items=items,
-            subtotal=subtotal,
-            total=total - discount,
-            info=info,
-        )
-
-    async def log_purchase(
-        self,
-        customer: discord.Member,
-        username: str,
-        method: str,
-        items: list[Stock],
-        subtotal: int,
-        total: int,
-        info: str
-    ) -> tuple[float, discord.Message]:
-        """Logs a purchase and updates channel info."""
-
-        log_collection: Collection[Log] = self.bot.database.get_collection("logs")
-        stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
-        log_channel = self.bot.config.channels.purchases
-
-        discount = subtotal - total
-
-        item_names: list[str] = []
-        for item in items:
-            set = item.get("set", "")
-            name = item["name"]
-            price = item["price"]
-
-            stock_collection.update_one(item, {"$inc": {"quantity": -1}})
-
-            log = Log(user_id=customer.id, username=username, item=item)
-            log[self.methods[method]] = info
-
-            item_names.append(f"{set} {name}")
-            log_collection.insert_one(log)
-
-            try:
-                itemized_discount = discount / len(items)
-                write_to_ws(username, customer.id, name, price - itemized_discount)
-                reaction = '\N{white heavy check mark}'
-            except:
-                reaction = '\N{cross mark}'
-
-        log_count = log_collection.count_documents({"user_id": customer.id})
-        user_logs = log_collection.find({"user_id": customer.id})
-        total_spent = sum([log["item"]["price"] for log in user_logs])
-
-        discount_tag = f" (-{price_fmt(discount)})" if discount > 0 else ""
-
-        log_embed = discord.Embed(
-            color=0x77ABFC,
-            description=f"{customer.mention} (`{customer.id}`) purchased **{'**, **'.join(item_names)}** for **{price_fmt(total)}**{discount_tag}.",
-        )
-
-        log_embed.set_author(name=f"{customer}", icon_url=customer.display_avatar.url)
-        log_embed.add_field(name=f"__Username__", value=username, inline=True)
-        log_embed.add_field(name=f"__{method}__", value=info, inline=True)
-        log_embed.add_field(name=f"__Total Spent__", value=f"{price_fmt(total_spent)}", inline=True)
-        log_embed.set_footer(text=f"Transaction #{log_count}")
-
-        customer_role = self.bot.config.roles.customer
-        await customer.add_roles(customer_role)
-
-        tier_role = None
-        if total_spent >= 100:
-            tier_role = self.bot.config.roles.tier1
-        if total_spent >= 250:
-            tier_role = self.bot.config.roles.tier2
-        if total_spent >= 500:
-            tier_role = self.bot.config.roles.tier3
-        if total_spent >= 1000:
-            tier_role = self.bot.config.roles.tier4
-        if total_spent >= 1500:
-            tier_role = self.bot.config.roles.tier5
-
-        if tier_role:
-            await customer.add_roles(tier_role, reason=f"Spent ${total_spent:,}")
-
-        message = await log_channel.send(embed=log_embed)
-        await message.add_reaction(reaction)
-        return message
 
 class DynamicDelete(
     discord.ui.DynamicItem[discord.ui.Button],
@@ -174,11 +40,6 @@ class DynamicDelete(
         if not is_staff:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             return
-        
-        if self.category == "Purchase":
-            modal = LogPurchaseModal(interaction.client)
-            await interaction.response.send_modal(modal)
-            await modal.wait()
 
         embed = discord.Embed(color=0x599ae0)
 
@@ -621,11 +482,11 @@ class PurchasePanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="\N{money with wings}", label="Purchase", style=discord.ButtonStyle.primary, custom_id="purchase_ticket")
+    @discord.ui.button(emoji="\N{shopping bags}", label="Purchase", style=discord.ButtonStyle.primary, custom_id="purchase_ticket")
     async def purchase_ticket(self, interaction: discord.Interaction[Bot], button: discord.ui.Button):
         embed = discord.Embed(
             color=0x599ae0,
-            description=f"Please select the items you'd like to purchase"
+            description=f"Please select the items you'd like to purchase:"
         )
 
         await interaction.response.send_message(embed=embed, view=PurchaseDropdown(interaction.client), ephemeral=True)
@@ -634,6 +495,11 @@ class PurchasePanel(discord.ui.View):
     async def exclusive_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(label='Enter info for your purchase', placeholder='e.g. 2050 VALORANT Points')
         await interaction.response.send_modal(CreationModal('Exclusive', info))
+
+    @discord.ui.button(emoji="\N{money with wings}", label="Sell", style=discord.ButtonStyle.primary, custom_id="sell_ticket")
+    async def sell_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(label='Enter info for your sale', placeholder='e.g. Golden Age Tanto for $100')
+        await interaction.response.send_modal(CreationModal('Sell', info))
 
 class SupportPanel(discord.ui.View):
     def __init__(self):
