@@ -299,7 +299,7 @@ class Accounting(commands.Cog):
                     description=f"**{new_item['set']} {new_item['name']}** has been updated from **${old_price:,}** to **${price:,}**.",
                 )
 
-                await updates_channel.send(content="<@&1167290712220504064>", embed=price_embed)
+                # await updates_channel.send(content="<@&1167290712220504064>", embed=price_embed)
 
         if quantity is not None:
             new_item["quantity"] = quantity

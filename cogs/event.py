@@ -68,6 +68,23 @@ Channel %s (ID: %d)""",
         message = await ctx.reply(embed=embed, ephemeral=True)
         await asyncio.sleep(5)
         await message.delete()
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
+        """Called when the bot receives a message."""
+
+        if message.author.bot:
+            return
+
+        if message.channel.id == 1213589851065163806:
+            embed = discord.Embed(
+                color=0xE24C4B,
+                description=f"{EMOJIS.error} Please only use commands in this channel.",
+            )
+
+            await message.reply(embed=embed, mention_author=True, delete_after=5)
+            await asyncio.sleep(5)
+            await message.delete()
         
 
     async def on_app_command_error(self, interaction: discord.Interaction, error: apc.AppCommandError) -> None:
