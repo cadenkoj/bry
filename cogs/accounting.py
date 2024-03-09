@@ -30,6 +30,7 @@ class Accounting(commands.Cog):
         interaction: discord.Interaction,
         username: str,
         user_id: str,
+        roblox: str,
         reporter: discord.Member,
         reason: str,
         proof: discord.Attachment
@@ -42,6 +43,8 @@ class Accounting(commands.Cog):
             The username of the scammer.
         user_id : str
             The user ID of the scammer.
+        roblox : str
+            The Roblox username of the scammer.
         reporter : discord.Member
             The member who reported the scam.
         reason : str
@@ -62,8 +65,8 @@ class Accounting(commands.Cog):
             timestamp=discord.utils.utcnow(),
         )
 
-        embed.add_field(name="Username", value=username, inline=True)
-        embed.add_field(name="User ID", value=f"`{user_id}`", inline=True)
+        embed.add_field(name="User", value=f"{username} `{user_id}`", inline=True)
+        embed.add_field(name="Roblox", value=roblox, inline=True)
         embed.add_field(name="Reporter", value=reporter.mention, inline=True)
         embed.add_field(name="Reason", value=reason, inline=False)
 
