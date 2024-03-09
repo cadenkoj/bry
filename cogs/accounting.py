@@ -215,7 +215,10 @@ class Accounting(commands.Cog):
 
         embed.add_field(name="User", value=f"{username} `{user_id}`", inline=True)
         embed.add_field(name="Roblox", value=roblox, inline=True)
-        embed.add_field(name="Reporter", value=reporter.mention, inline=True)
+        
+        if reporter:
+            embed.add_field(name="Reporter", value=reporter.mention, inline=True)
+
         embed.add_field(name="Reason", value=reason, inline=False)
 
         embed.set_image(url=proof1.url)
