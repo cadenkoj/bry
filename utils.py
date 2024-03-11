@@ -1,9 +1,11 @@
+import io
 import json
 import locale
 import logging
 import os
 import re
 from datetime import datetime, timedelta
+import chat_exporter
 
 import discord
 import gspread
@@ -14,28 +16,40 @@ from constants import *
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
+async def save_transcript(channel: discord.TextChannel):
+    transcript = await chat_exporter.export(channel)
+
+    if not transcript:
+        return
+    
+    with open(f"/data/transcript-{channel.id}.html", "wb") as file:
+        file.write(transcript.encode())
+
 def calc_discount(total, item_count):
- if item_count >= 2 and total >= 50:
-     discount = (total // 50) * 5
-     return min(discount, 50)
- else:
-     return 0
- 
+    if item_count >= 2 and total >= 50:
+        discount = (total // 50) * 5
+        return min(discount, 50)
+    else:
+        return 0
+
+
 def split_list(lst, chunk_size):
     return [lst[i:i+chunk_size] for i in range(0, len(lst), chunk_size)]
+
 
 def fetch_roblox_id(username: str) -> int | None:
     try:
         payload = json.dumps({
-          "usernames": [username],
-          "excludeBannedUsers": True
+            "usernames": [username],
+            "excludeBannedUsers": True
         })
 
         headers = {
-          'Content-Type': 'application/json'
+            'Content-Type': 'application/json'
         }
 
-        res = requests.post(f"https://users.roblox.com/v1/usernames/users", data=payload, headers=headers)
+        res = requests.post(
+            f"https://users.roblox.com/v1/usernames/users", data=payload, headers=headers)
         res.raise_for_status()
 
         data = res.json()
@@ -44,40 +58,45 @@ def fetch_roblox_id(username: str) -> int | None:
             return data["data"][0]["id"]
     except:
         return None
-    
+
+
 header_styles = {
     "backgroundColor": {
-      "red": 0.92,
-      "green": 0.82,
-      "blue": 0.86,
+        "red": 0.92,
+        "green": 0.82,
+        "blue": 0.86,
     },
     "horizontalAlignment": "CENTER",
     "textFormat": {
-      "fontSize": 12,
-      "bold": True,
+        "fontSize": 12,
+        "bold": True,
     }
 }
 
 row_styles = {
     "backgroundColor": {
-      "red": 1,
-      "green": 1,
-      "blue": 1,
+        "red": 1,
+        "green": 1,
+        "blue": 1,
     },
     "horizontalAlignment": "CENTER",
     "textFormat": {
-      "fontSize": 10,
+        "fontSize": 10,
     }
 }
+
 
 def write_to_ws(new_total: int, username: str, user_id: int, item: str, price: int) -> None:
     if not IS_PROD:
         return
 
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-    gc = gspread.authorize(credentials)
+    scope = ['https://spreadsheets.google.com/feeds',
+             'https://www.googleapis.com/auth/drive']
 
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        'credentials.json', scope)
+
+    gc = gspread.authorize(credentials)
     ss = gc.open_by_key(os.environ.get('SPREADSHEET_ID'))
     ws = ss.get_worksheet(0)
 
@@ -93,7 +112,8 @@ def write_to_ws(new_total: int, username: str, user_id: int, item: str, price: i
     row = len(existing_data) + 1
 
     if len(existing_data) == 0 or data[0] != existing_data[-1][0]:
-        header_row = ["Date", "User", "Customer (Roblox ID)", "Discord ID", "Item", "Amount", "Total Cost"]
+        header_row = [
+            "Date", "User", "Customer (Roblox ID)", "Discord ID", "Item", "Amount", "Total Cost"]
 
         ws.append_row(header_row)
         ws.format(f"A{row}:G{row}", header_styles)
@@ -101,8 +121,10 @@ def write_to_ws(new_total: int, username: str, user_id: int, item: str, price: i
 
     ws.append_row(data)
 
-    ws.format([f"A{row}", f"C{row}:D{row}"], {**row_styles, "textFormat": {"bold": False}})
-    ws.format([f"B{row}", f"E{row}:G{row}"], {**row_styles, "textFormat": {"bold": True}})
+    ws.format([f"A{row}", f"C{row}:D{row}"], {
+              **row_styles, "textFormat": {"bold": False}})
+    ws.format([f"B{row}", f"E{row}:G{row}"], {
+              **row_styles, "textFormat": {"bold": True}})
 
     header_row = 0
     for i, row in enumerate(existing_data, start=2):
@@ -110,6 +132,7 @@ def write_to_ws(new_total: int, username: str, user_id: int, item: str, price: i
             header_row = i
 
     ws.update_cell(header_row, 7, locale.currency(new_total, grouping=True))
+
 
 def parse_human_duration(duration: str) -> timedelta:
     components = {
@@ -129,9 +152,11 @@ def parse_human_duration(duration: str) -> timedelta:
     delta_time = timedelta(**components)
 
     if current_time == current_time + delta_time:
-        raise ValueError("Invalid input format. Use the 'XhYm' format. e.g. '1h30m'")
+        raise ValueError(
+            "Invalid input format. Use the 'XhYm' format. e.g. '1h30m'")
 
     return delta_time
+
 
 @dataclass
 class UserLog:
@@ -139,11 +164,13 @@ class UserLog:
     moderator: discord.Member
     reason: str
 
+
 @dataclass
 class MemberLog:
     user: discord.Member
     moderator: discord.Member
     reason: str
+
 
 @dataclass
 class ActionCache:
@@ -152,7 +179,8 @@ class ActionCache:
     ban: MemberLog
     unmute: MemberLog
     mute: MemberLog
-    
+
+
 class LogFormatter(logging.Formatter):
     LEVEL_COLOURS = [
         (logging.DEBUG, "\x1b[40;1m"),
@@ -164,7 +192,8 @@ class LogFormatter(logging.Formatter):
 
     FORMATS = {
         level: logging.Formatter(
-            f"\x1b[30;1m%(asctime)s\x1b[0m {colour}%(levelname)-8s\x1b[0m \x1b[35m%(name)s\x1b[0m %(message)s",
+            f"\x1b[30;1m%(asctime)s\x1b[0m {
+                colour}%(levelname)-8s\x1b[0m \x1b[35m%(name)s\x1b[0m %(message)s",
             "%Y-%m-%d %H:%M:%S",
         )
         for level, colour in LEVEL_COLOURS
@@ -176,7 +205,8 @@ class LogFormatter(logging.Formatter):
             placeholder = re.search(r"%\w+", msg)
 
             if placeholder:
-                msg = msg.replace(placeholder.group(), f"\x1b[34m{arg}\x1b[0m", 1)
+                msg = msg.replace(placeholder.group(),
+                                  f"\x1b[34m{arg}\x1b[0m", 1)
 
         return msg
 
@@ -211,43 +241,3 @@ def setup_logging() -> None:
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
-
-# chrome_service = webdriver.ChromeService()
-# chrome_options = webdriver.ChromeOptions()
-# chrome_options.add_argument('--headless')
-# chrome_options.add_argument('--no-sandbox')
-# chrome_options.add_argument('--disable-dev-shm-usage')
-
-# driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-
-# async def parse_cash_app_receipt(url: str) -> tuple[str, bool]:
-#     parsed_url = urlparse(url)
-
-#     if parsed_url.netloc != "cash.app":
-#         return "Invalid URL. Please provide a valid Cash App web receipt.", False
-    
-#     try:
-#         driver.get(url)
-
-#         header_info = EC.presence_of_element_located((By.XPATH, "//h4[contains(text(),'Payment to $ehxpulse')]"))
-#         WebDriverWait(driver, 5).until(header_info)
-
-#         note = driver.find_element(By.XPATH, "//p[contains(text(),'For')]").text
-#         info = driver.find_elements(By.TAG_NAME, "dd")
-
-#         amount = info[0].text
-#         source = info[1].text
-
-#         if note != "For gift":
-#             return "Invalid note. Please wait for refund and send with the note \"gift\".", False
-        
-#         if source != "Cash":
-#             return "Invalid source. Please wait for refund and send with Cash Balance.", False
-
-#         return amount, True
-    
-#     except NoSuchElementException:
-#         return "Invalid Cash App transaction.", False
-
-#     except TimeoutException:
-#         return "Timed out reading Cash App web receipt.", False

@@ -9,4 +9,6 @@ load_dotenv()
 setup_logging()
 
 bot = Bot()
-bot.run(os.environ.get("TOKEN"), reconnect=True, log_handler=None)
+
+if __name__ == '__main__':
+    bot.run(os.environ.get("TOKEN"), reconnect=True, log_handler=None)

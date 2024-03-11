@@ -1,6 +1,7 @@
 import asyncio
 import re
 from collections import defaultdict
+import chat_exporter
 
 import discord
 import humanize
@@ -10,7 +11,7 @@ from pymongo.collection import Collection
 from _types import Stock, Ticket
 from bot import Bot
 from constants import *
-from utils import calc_discount, split_list
+from utils import calc_discount, save_transcript, split_list
 
 
 class DynamicDelete(
@@ -64,9 +65,6 @@ class DynamicDelete(
 
         params = {"channel_id": interaction.channel_id, "category": self.category}
 
-        if IS_PROD:
-            requests.get(f"http://bot-api.railway.internal:8080/save", params)
-
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
         
         filter = {"channel_id": interaction.channel_id}
@@ -97,6 +95,8 @@ class DynamicDelete(
         )
 
         view = discord.ui.View()
+
+        await save_transcript(interaction.channel)
 
         params = f"channel_id={interaction.channel_id}"
         transcript_url = f"https://bryshop-api.up.railway.app/view?{params}"
