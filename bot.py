@@ -31,8 +31,7 @@ class Bot(commands.Bot):
                 try:
                     await self.load_extension(f"cogs.{cog}")
                 except Exception as e:
-                    _log.warning(f"Cog '{cog}' raised an exception: {
-                                 e.__class__.__name__}: {e}")
+                    _log.warning(f"Cog '{cog}' raised an exception: {e.__class__.__name__}: {e}")
 
         for filename in os.listdir("views"):
             if filename.endswith(".py"):
@@ -40,5 +39,4 @@ class Bot(commands.Bot):
                 try:
                     await self.load_extension(f"views.{view}")
                 except Exception as e:
-                    _log.warning(f"View '{view}' raised an exception: {
-                                 e.__class__.__name__}: {e}")
+                    _log.warning(f"View '{view}' raised an exception: {e.__class__.__name__}: {e}")
