@@ -18,7 +18,7 @@ class Emojis:
     ticket = "<:Ticket:1169397900183351378>"
 
 
-IS_PROD = os.environ.get("ENV") == "prod"
+IS_PROD = os.getenv("ENV") == "prod"
 
 ICONS = Icons()
 EMOJIS = Emojis()

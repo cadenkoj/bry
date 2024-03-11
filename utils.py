@@ -97,7 +97,7 @@ def write_to_ws(new_total: int, username: str, user_id: int, item: str, price: i
         'credentials.json', scope)
 
     gc = gspread.authorize(credentials)
-    ss = gc.open_by_key(os.environ.get('SPREADSHEET_ID'))
+    ss = gc.open_by_key(os.getenv('SPREADSHEET_ID'))
     ws = ss.get_worksheet(0)
 
     current_time = datetime.now()

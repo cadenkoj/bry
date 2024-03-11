@@ -1,3 +1,4 @@
+import os
 from discord.ext import commands, tasks
 from quart import Quart, request, send_file
 
@@ -28,7 +29,7 @@ class API(commands.Cog):
 
     @tasks.loop()
     async def web_server(self):
-        await self.app.run_task(debug=not IS_PROD)
+        await self.app.run_task(port=os.getenv("PORT", 5000), debug=not IS_PROD)
 
     @web_server.before_loop
     async def web_server_before_loop(self):

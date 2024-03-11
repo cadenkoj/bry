@@ -11,4 +11,4 @@ setup_logging()
 bot = Bot()
 
 if __name__ == '__main__':
-    bot.run(os.environ.get("TOKEN"), reconnect=True, log_handler=None)
+    bot.run(os.getenv("TOKEN"), reconnect=True, log_handler=None)

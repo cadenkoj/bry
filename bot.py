@@ -22,7 +22,7 @@ class Bot(commands.Bot):
         self.action_cache = ActionCache(None, None, None, None, None)
 
     def _get_database(self, **options) -> Database:
-        return MongoClient(os.environ.get("ATLAS_URI")).get_database(**options)
+        return MongoClient(os.getenv("ATLAS_URI")).get_database(**options)
 
     async def setup_hook(self) -> None:
         for filename in os.listdir("cogs"):
