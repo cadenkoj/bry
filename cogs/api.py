@@ -19,14 +19,6 @@ class API(commands.Cog):
     
         return await send_file(f"{os.getenv('RAILWAY_VOLUME_MOUNT_PATH')}/transcript-{channel_id}.html")
     
-    @app.route('/download')
-    async def download():
-        channel_id = request.args.get('channel_id')
-        if not channel_id:
-            return "Error: URL parameter is missing.", 400
-
-        return await send_file(f"{os.getenv('RAILWAY_VOLUME_MOUNT_PATH')}/transcript-{channel_id}.html", as_attachment=True)
-
     @tasks.loop()
     async def web_server(self):
         await self.app.run_task("0.0.0.0", os.getenv("PORT", 5000), not IS_PROD)
