@@ -25,15 +25,6 @@ class Bot(commands.Bot):
         return MongoClient(os.getenv("ATLAS_URI")).get_database(**options)
 
     async def setup_hook(self) -> None:
-        print(os.getenv("RAILWAY_VOLUME_MOUNT_PATH"))
-        for root, dirs, files in os.walk(os.getenv("RAILWAY_VOLUME_MOUNT_PATH")):
-            level = root.replace(os.getenv("RAILWAY_VOLUME_MOUNT_PATH"), '').count(os.sep)
-            indent = '>' * 4 * (level)
-            print('{}{}/'.format(indent, os.path.basename(root)))
-            subindent = '>' * 4 * (level + 1)
-            for f in files:
-                print('{}{}'.format(subindent, f))
-
         for filename in os.listdir("cogs"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
