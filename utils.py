@@ -25,7 +25,7 @@ async def save_transcript(channel: discord.TextChannel):
     data = transcript.encode()
     filename = f"transcript-{channel.id}.html"
     
-    with open(f"/data/{filename}", "wb") as file:
+    with open(f"{os.getenv('RAILWAY_VOLUME_MOUNT_PATH')}/{filename}", "wb") as file:
         file.write(data)
         
     return discord.File(io.BytesIO(data), filename=filename)
