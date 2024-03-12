@@ -96,19 +96,18 @@ class DynamicDelete(
 
         view = discord.ui.View()
 
-        await save_transcript(interaction.channel)
-
         params = f"channel_id={interaction.channel_id}"
         transcript_url = f"https://bry.up.railway.app/view?{params}"
-        download_url = f"https://bry.up.railway.app/download?{params}"
 
         view_transcript = discord.ui.Button(emoji="\N{PAGE FACING UP}", label="View Transcript", url=transcript_url, style=discord.ButtonStyle.link)
         download_transcript = discord.ui.Button(emoji="\N{LINK SYMBOL}", label="Download Transcript", url=download_url, style=discord.ButtonStyle.link)
 
         view.add_item(view_transcript)
         view.add_item(download_transcript)
+        
+        file = await save_transcript(interaction.channel)
 
-        await channel.send(embed=embed, view=view)
+        await channel.send(embed=embed, view=view, file=file)
         await asyncio.sleep(2)
         await interaction.channel.delete()
 
