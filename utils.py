@@ -21,9 +21,14 @@ async def save_transcript(channel: discord.TextChannel):
 
     if not transcript:
         return
+        
+    data = transcript.encode()
+    filename = f"transcript-{channel.id}.html"
     
-    with open(f"/data/transcript-{channel.id}.html", "wb") as file:
-        file.write(transcript.encode())
+    with open(f"/data/{filename}", "wb") as file:
+        file.write(data)
+        
+    return discord.File(io.BytesIO(data), filename=filename)
 
 def calc_discount(total, item_count):
     if item_count >= 2 and total >= 50:
