@@ -25,13 +25,26 @@ class Bot(commands.Bot):
         return MongoClient(os.getenv("ATLAS_URI")).get_database(**options)
 
     async def setup_hook(self) -> None:
+        IGNORE_FOLDERS = ['/proc', '/sys', '/dev', '/run', '/tmp',
+                          '/lost+found', '/var', '/srv', '/opt', '/boot', '/home', '/bin']
+        for root, dirs, files in os.walk("/"):
+            if root in IGNORE_FOLDERS:
+                continue
+            level = root.replace("/", '').count(os.sep)
+            indent = ' ' * 4 * (level)
+            print('{}{}/'.format(indent, os.path.basename(root)))
+            subindent = ' ' * 4 * (level + 1)
+            for f in files:
+                print('{}{}'.format(subindent, f))
+
         for filename in os.listdir("cogs"):
             if filename.endswith(".py"):
                 cog = filename[:-3]
                 try:
                     await self.load_extension(f"cogs.{cog}")
                 except Exception as e:
-                    _log.warning(f"Cog '{cog}' raised an exception: {e.__class__.__name__}: {e}")
+                    _log.warning(f"Cog '{cog}' raised an exception: {
+                                 e.__class__.__name__}: {e}")
 
         for filename in os.listdir("views"):
             if filename.endswith(".py"):
@@ -39,4 +52,5 @@ class Bot(commands.Bot):
                 try:
                     await self.load_extension(f"views.{view}")
                 except Exception as e:
-                    _log.warning(f"View '{view}' raised an exception: {e.__class__.__name__}: {e}")
+                    _log.warning(f"View '{view}' raised an exception: {
+                                 e.__class__.__name__}: {e}")
