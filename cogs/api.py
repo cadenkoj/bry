@@ -17,7 +17,7 @@ class API(commands.Cog):
         if not channel_id:
             return "Error: URL parameter is missing.", 400
     
-        return await send_file(f"{os.getenv("RAILWAY_VOLUME_MOUNT_PATH")}/transcript-{channel_id}.html")
+        return await send_file(f"{os.getenv('RAILWAY_VOLUME_MOUNT_PATH')}/transcript-{channel_id}.html")
     
     @app.route('/download')
     async def download():
@@ -25,7 +25,7 @@ class API(commands.Cog):
         if not channel_id:
             return "Error: URL parameter is missing.", 400
 
-        return await send_file(f"{os.getenv("RAILWAY_VOLUME_MOUNT_PATH")}/transcript-{channel_id}.html", as_attachment=True)
+        return await send_file(f"{os.getenv('RAILWAY_VOLUME_MOUNT_PATH')}/transcript-{channel_id}.html", as_attachment=True)
 
     @tasks.loop()
     async def web_server(self):
