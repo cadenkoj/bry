@@ -25,12 +25,8 @@ class Bot(commands.Bot):
         return MongoClient(os.getenv("ATLAS_URI")).get_database(**options)
 
     async def setup_hook(self) -> None:
-        IGNORE_FOLDERS = ['/proc', '/sys', '/dev', '/run', '/tmp',
-                          '/lost+found', '/var', '/srv', '/opt', '/boot', '/home', '/bin']
-        for root, dirs, files in os.walk("/"):
-            if root in IGNORE_FOLDERS:
-                continue
-            level = root.replace("/", '').count(os.sep)
+        for root, dirs, files in os.walk("/proc/mounts"):
+            level = root.replace("/proc/mounts", '').count(os.sep)
             indent = ' ' * 4 * (level)
             print('{}{}/'.format(indent, os.path.basename(root)))
             subindent = ' ' * 4 * (level + 1)
