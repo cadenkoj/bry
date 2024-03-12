@@ -28,9 +28,9 @@ class Bot(commands.Bot):
         print(os.getenv("RAILWAY_VOLUME_MOUNT_PATH"))
         for root, dirs, files in os.walk(os.getenv("RAILWAY_VOLUME_MOUNT_PATH")):
             level = root.replace(os.getenv("RAILWAY_VOLUME_MOUNT_PATH"), '').count(os.sep)
-            indent = ' ' * 4 * (level)
+            indent = '>' * 4 * (level)
             print('{}{}/'.format(indent, os.path.basename(root)))
-            subindent = ' ' * 4 * (level + 1)
+            subindent = '>' * 4 * (level + 1)
             for f in files:
                 print('{}{}'.format(subindent, f))
 
