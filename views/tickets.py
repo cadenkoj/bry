@@ -99,8 +99,8 @@ class DynamicDelete(
         await save_transcript(interaction.channel)
 
         params = f"channel_id={interaction.channel_id}"
-        transcript_url = f"https://bryshop-api.up.railway.app/view?{params}"
-        download_url = f"https://bryshop-api.up.railway.app/download?{params}"
+        transcript_url = f"https://bry.up.railway.app/view?{params}"
+        download_url = f"https://bry.up.railway.app/download?{params}"
 
         view_transcript = discord.ui.Button(emoji="\N{PAGE FACING UP}", label="View Transcript", url=transcript_url, style=discord.ButtonStyle.link)
         download_transcript = discord.ui.Button(emoji="\N{LINK SYMBOL}", label="Download Transcript", url=download_url, style=discord.ButtonStyle.link)
