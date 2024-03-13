@@ -138,7 +138,7 @@ class Info(commands.Cog):
             description=f"""
 1. Send a screenshot of your Cash App balance and ping us. Then wait for us to confirm.
 
-2. Once we confirm, send $1 to the Cash App below. After <@1152002279378010152> accepts the payment, send ${amount - 1:,}.
+2. Once we confirm, send $1 to the Cash App below.
 
 3. Now send the web receipt link, Transactions > ${amount - 1:,} > Web receipt > Copy link.
 
