@@ -149,7 +149,7 @@ class Info(commands.Cog):
         )
 
         embed.set_image(
-            url="https://cdn.discordapp.com/attachments/1173382235420885053/1202402278120755291/image0.png?ex=65cd5362&is=65bade62&hm=219de6d215d509b1db182bb9a94465bd579dbcec56c0980a0828b4b0127b6bde&"
+            url="https://media.discordapp.net/attachments/1203846919583957064/1217552769066729594/cachedImage.png?ex=66047161&is=65f1fc61&hm=810611d01eba3c1b704928242944b590b24bd9b9165327b9bb0fb92ae891f0f4&"
         )
 
         cashapp_button = discord.ui.Button(
