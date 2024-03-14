@@ -42,7 +42,7 @@ class Accounting(commands.Cog):
         interaction: discord.Interaction,
         customer: discord.Member,
         info: str,
-        discount = 0.0,
+        discount: Optional[float] = 0.0,
     ):
         await interaction.response.defer(ephemeral=True)
 
