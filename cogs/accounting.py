@@ -42,7 +42,7 @@ class Accounting(commands.Cog):
         interaction: discord.Interaction,
         customer: discord.Member,
         info: str,
-        discount: Optional[float],
+        discount = 0.0,
     ):
         await interaction.response.defer(ephemeral=True)
 
@@ -64,9 +64,6 @@ class Accounting(commands.Cog):
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
         items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in item_ids if item_id != None]
-
-        discount = int(self.discount.value) if self.discount.value else 0
-        info = self.info.value if self.info.value else "No info provided."
 
         await self.log_purchase(
             customer=customer,
