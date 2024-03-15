@@ -40,7 +40,7 @@ class Accounting(commands.Cog):
     async def purchase(
         self,
         interaction: discord.Interaction,
-        customer: discord.Member,
+        roblox: str,
         info: str,
         discount: Optional[float] = 0.0,
     ):
@@ -56,18 +56,20 @@ class Accounting(commands.Cog):
 
         if ticket is None:
             raise Exception("No active ticket found.")
-
+            
+        user_id = ticket["user_id"]
         item_ids = ticket["data"]["items"]
         method = ticket["data"]["payment_method"]
         subtotal = ticket["data"]["subtotal"]
         total = ticket["data"]["total"]
 
         stock_collection: Collection[Stock] = self.bot.database.get_collection("stock")
+        customer = interaction.guild.get_member(user_id)
         items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in item_ids if item_id != None]
 
         await self.log_purchase(
             customer=customer,
-            username=self.username.value,
+            username=roblox,
             method=method,
             items=items,
             subtotal=subtotal,
