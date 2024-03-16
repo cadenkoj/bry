@@ -71,6 +71,10 @@ class DynamicDelete(
         update = {"$set": {"open": False}}
         ticket = ticket_collection.find_one_and_update(filter, update)
 
+        if ticket == None:
+            await interaction.followup.send("This ticket has already been closed.", ephemeral=True)
+            return
+
         creator_name = ticket["username"]
         creator_id = ticket["user_id"]
 
@@ -169,6 +173,10 @@ class DynamicToggle(
 
         filter = {"channel_id": interaction.channel_id}
         ticket = ticket_collection.find_one(filter)
+
+        if ticket == None:
+            await interaction.followup.send("This ticket has already been closed.", ephemeral=True)
+            return
 
         creator_name = ticket["username"]
         creator_id = ticket["user_id"]

@@ -67,7 +67,7 @@ class Accounting(commands.Cog):
         customer = interaction.guild.get_member(user_id)
         items = [stock_collection.find_one({"_id": ObjectId(item_id)}) for item_id in item_ids if item_id != None]
 
-        await self.log_purchase(
+        purchase_log = await self.log_purchase(
             customer=customer,
             username=roblox,
             method=method,
@@ -76,6 +76,18 @@ class Accounting(commands.Cog):
             total=total - discount,
             info=info,
         )
+
+        embed = discord.Embed(
+            color=0x599ae0,
+            description=f"View the purchase log here: {purchase_log.jump_url}"
+        )
+        
+        embed.set_author(
+            name=f"Payment Completed",
+            icon_url=ICONS.ticket
+        )
+
+        await interaction.followup.send(embed=embed)
 
     async def log_purchase(
         self,
@@ -86,7 +98,7 @@ class Accounting(commands.Cog):
         subtotal: int,
         total: int,
         info: str
-    ) -> tuple[float, discord.Message]:
+    ) -> discord.Message:
         """Logs a purchase and updates channel info."""
 
         log_collection: Collection[Log] = self.bot.database.get_collection("logs")
