@@ -63,8 +63,6 @@ class DynamicDelete(
         if not channel:
             channel = await category.create_text_channel('transcripts', overwrites=overwrites)
 
-        params = {"channel_id": interaction.channel_id, "category": self.category}
-
         ticket_collection: Collection[Ticket] = interaction.client.database.get_collection("tickets")
         
         filter = {"channel_id": interaction.channel_id}
