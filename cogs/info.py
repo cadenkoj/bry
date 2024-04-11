@@ -94,9 +94,6 @@ class Info(commands.Cog):
         if not is_staff:
             raise Exception("You do not have permission to use this command.")
         
-        await ctx.send(content="Temporarily Disabled!")
-        return
-        
         embed = discord.Embed(
             color=0x012169,
             title="PayPal",
@@ -118,7 +115,7 @@ class Info(commands.Cog):
         paypal_button = discord.ui.Button(
             style=discord.ButtonStyle.link,
             label="PayPal",
-            url=f"https://www.paypal.com/paypalme/hadialidani",
+            url=f"https://paypal.me/korrzkorrzz?country.x=DE&locale.x=en_US",
         )
         view = ConfirmationView(paypal_button)
 
