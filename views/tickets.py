@@ -498,15 +498,15 @@ class PurchasePanel(discord.ui.View):
         info = discord.ui.TextInput(label='Enter info for your purchase', placeholder='e.g. 2050 VALORANT Points')
         await interaction.response.send_modal(CreationModal('Exclusive', info))
 
-    @discord.ui.button(emoji="\N{money with wings}", label="Sell", style=discord.ButtonStyle.primary, custom_id="dhc_ticket")
-    async def dhc_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        info = discord.ui.TextInput(label='Enter info for your sale')
-        await interaction.response.send_modal(CreationModal('DHC', info))
-
-    @discord.ui.button(emoji="<:dahoodcash:1200935989363871837>", label="DHC", style=discord.ButtonStyle.primary, custom_id="sell_ticket")
+    @discord.ui.button(emoji="\N{money with wings}", label="Sell", style=discord.ButtonStyle.primary, custom_id="sell_ticket")
     async def sell_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         info = discord.ui.TextInput(label='Enter info for your sale', placeholder='e.g. Golden Age Tanto for $100')
         await interaction.response.send_modal(CreationModal('Sell', info))
+
+    @discord.ui.button(emoji="<:dahoodcash:1200935989363871837>", label="DHC", style=discord.ButtonStyle.primary, custom_id="dhc_ticket")
+    async def dhc_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        info = discord.ui.TextInput(label='Enter info for your purchase')
+        await interaction.response.send_modal(CreationModal('DHC', info))
 
 class SupportPanel(discord.ui.View):
     def __init__(self):
